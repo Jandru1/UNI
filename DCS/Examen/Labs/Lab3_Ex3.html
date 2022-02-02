@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 3.3</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+
+<body>
+
+<h1>DCS - 3.3 Cubic Hermite interpolation</h1>
+
+<canvas id="canvas1" height="600" width="800" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<br/>
+
+<button type="button" onclick="init()">Reset</button>
+<button type="button" onclick="doProblem2()">t/2 => (300, 300)</button>
+<br/>
+<span>
+    <label>At t/2, the curve is at (</label>
+    <label id="x_val"></label>
+    <label>, </label>
+    <label id="y_val"></label>
+    <label>)</label>
+</span>
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, context1, points, myTransformation, drag = null, draggedPoint, num_steps;
+    var style, vector_style, curve_style;
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        };
+
+        vector_style = {
+            color : "rgba(0,0,0,1)",
+            width : 2,
+            tip_length : 10,
+            tip_angle : (Math.PI / 6)
+        };
+
+        curve_style = {
+            color : "rgba(255,0,0,1)",
+            width : 2
+        };
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        // event handlers (only canvas1)
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+
+        num_steps = 150;
+        points = [{ x: 200, y: 200 },{ x: 300, y: 300 },{ x: 300, y: 300 },{ x: 400, y: 300 }];
+
+        updateHTML();
+        drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(0, 0, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+        // Curve through points and vertices
+        //drawCurve(context1, style, points); // Draw curve
+        //drawVertices(context1, style, points); // Draw vertices as circles
+        drawVector(context1, vector_style, points[0], points[1]);
+        drawVector(context1, vector_style, points[2], points[3]);
+
+        //Draw the Hermite Interpolated curve
+        drawHermiteCurve(context1, curve_style, points[0], points[3], points[1], points[2]);
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        myContext.beginPath();
+
+        for (var x = 0; x <= bw; x += delta) {
+            myContext.moveTo(x, 0);
+            myContext.lineTo(x, bh);
+        }
+
+        for (var y = 0; y <= bh; y += delta) {
+            myContext.moveTo(0, y);
+            myContext.lineTo(bw , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+
+        myContext.beginPath();
+        myContext.fillStyle = "black";
+        myContext.font = "12px Arial";
+        myContext.fillText("(0,0)",2,12);
+
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        // Draw curve
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+        var currentPoint = transformation(points[0]);
+        ctx.moveTo(currentPoint.x, currentPoint.y);
+        for (var i = 0; i < points.length; i++) {
+            currentPoint =  transformation(points[i]);
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+        }
+        ctx.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    /**
+     Methods to allow dragging transformedPoints around
+     **/
+
+    // start dragging
+    function dragStart(e) {
+        e = mousePos(e);
+        var dx, dy;
+        for (var i=0; i<points.length;i++) {
+            dx = points[i].x - e.x;
+            dy = points[i].y - e.y;
+            if ((dx * dx) + (dy * dy) < style.point.radius * style.point.radius) {
+                drag = i;
+                draggedPoint = e;
+                canvas1.style.cursor = "move";
+                return;
+            }
+        }
+    }
+
+    // dragging
+    function dragging(e) {
+        if (drag!=null) {
+            e = mousePos(e);
+            points[drag].x += e.x - draggedPoint.x;
+            points[drag].y += e.y - draggedPoint.y;
+            draggedPoint = e;
+            updateHTML();
+            drawCanvas();
+        }
+    }
+
+    // end dragging
+    function dragEnd(e) {
+        drag = null;
+        canvas1.style.cursor = "default";
+        updateHTML();
+        drawCanvas();
+    }
+
+    // event parser
+    function mousePos(event) {
+        event = (event ? event : window.event);
+        return {
+            x: event.pageX - canvas1.offsetLeft,
+            y: event.pageY - canvas1.offsetTop
+        }
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    /**
+     * Auxiliary functions
+     */
+
+    function drawVector(context, style, point_a, point_b) {
+        //Set the line's style
+        context.beginPath();
+        context.lineWidth = style.width;
+        context.strokeStyle = style.color;
+
+        //Draw line
+        context.moveTo(point_a.x, point_a.y);
+        context.lineTo(point_b.x, point_b.y);
+        context.stroke();
+
+        //Set the tip's style
+        context.beginPath();
+        var tip_length = (style.hasOwnProperty("tip_length") ? style.tip_length : 10);
+        var tip_angle = (style.hasOwnProperty("tip_angle") ? style.tip_angle : Math.PI / 6);
+        context.lineWidth = (style.hasOwnProperty("tip_width") ? style.tip_width : style.width);
+        context.strokeStyle = (style.hasOwnProperty("tip_color") ? style.tip_color : style.color);
+
+        //Calculate the vector's angle
+        var dx = point_b.x - point_a.x;
+        var dy = point_b.y - point_a.y;
+        var angle = Math.atan2(dy, dx);
+
+        //Draw tip
+        context.beginPath();
+        context.moveTo(point_b.x - tip_length * Math.cos(angle - tip_angle), point_b.y - tip_length * Math.sin(angle - tip_angle));
+        context.lineTo(point_b.x, point_b.y);
+        context.lineTo(point_b.x - tip_length * Math.cos(angle + tip_angle), point_b.y - tip_length * Math.sin(angle + tip_angle));
+
+        context.stroke();
+    }
+
+    function getParametricHermiteFormula(point_a, point_b, a_vec_point, b_vec_point) {
+        //Transform from point to vector
+        var a_vec = {x: a_vec_point.x - point_a.x, y: a_vec_point.y - point_a.y};
+        var b_vec = {x: point_b.x - b_vec_point.x, y: point_b.y - b_vec_point.y};
+        console.log([a_vec, b_vec]);
+
+        return function(t) {
+            var t2 = Math.pow(t, 2);
+            var t3 = Math.pow(t, 3);
+
+            var f1 = (2*t3 - 3*t2 + 1);
+            var f2 = (-2*t3 + 3*t2);
+            var f3 = (t3 - 2*t2 + t);
+            var f4 = (t3 - t2);
+
+            var point = {x: f1 * point_a.x,             y: f1 * point_a.y};
+            point =     {x: point.x + f2 * point_b.x,   y: point.y + f2 * point_b.y};
+            point =     {x: point.x + f3 * a_vec.x,     y: point.y + f3 * a_vec.y};
+            point =     {x: point.x + f4 * b_vec.x,     y: point.y + f4 * b_vec.y};
+
+            return point;
+        }
+    }
+
+    function drawHermiteCurve(context, style, point_a, point_b, a_vec_point, b_vec_point) {
+        //Set the curve's style
+        context.beginPath();
+        context.lineWidth = style.width;
+        context.strokeStyle = style.color;
+
+        //Get the formula
+        var formula = getParametricHermiteFormula(point_a, point_b, a_vec_point, b_vec_point);
+
+        //Calculate the step
+        var step = 1 / num_steps;
+
+        //Draw curve
+        var current_point = formula(0);
+        context.moveTo(current_point.x, current_point.y);
+        for (var t = 0 + step; t <= 1; t += step) {
+            current_point = formula(t);
+            context.lineTo(current_point.x, current_point.y);
+            //context.moveTo(current_point.x, current_point.y);
+        }
+        context.stroke();
+    }
+
+    function updateHTML() {
+        var x_val = document.getElementById("x_val");
+        var y_val = document.getElementById("y_val");
+
+        var point = getParametricHermiteFormula(points[0], points[3], points[1], points[2])(1/2);
+
+        x_val.innerHTML = point.x;
+        y_val.innerHTML = point.y;
+    }
+
+    /*
+    PROBLEM 4.2
+    In order to keep the same directions of the tangent vectors, we need to scale them by some value.
+    This value must be the same for both x and y, as if they weren't the vectors wouldn't have the
+    same direction
+    This leaves us with two variables, by how much we scale v0 and by how much we scale v1.
+    We know t = 1/2, P0, P1, v1, v2 and the formula's result, but we have some scaling values A and B
+    that we don't know. Let's begin by calculating the blending functions
+        f1 = (2*t^3 - 3*t^2 + 1) = (2*(1/2)^3 - 3*(1/2)^2 + 1) = 1/2
+        f2 = (-2*t^3 + 3*t^2) = (-2*(1/2)^3 + 3*(1/2)^2) = 1/2
+        f3 = (t^3 - 2*t^2 + t) = ((1/2)^3 - 2*(1/2)^2 + (1/2)) = 1/8
+        f4 = (t^3 - t^2) = ((1/2)^3 - (1/2)^2) = -1/8
+    Once the blending functions have been calculated, we use the hermite parametrical interpolation
+
+        P = f1 * P0 + f2 * P1 + f3 * v0 * A + f4 * v0 * B
+    And if we substitute:
+        (300, 300) = 1/2 * (200, 200) + 1/2 * (400, 300) + 1/8 * A * (100, 100) - 1/8 * B * (100, 0)
+    Splitting for each coordinate
+        300 = 1/2 * 200 + 1/2 * 400 + 1/8 * A * 100 - 1/8 * B * 100
+        300 = 1/2 * 200 + 1/2 * 300 + 1/8 * A * 100
+    We can solve the second one, as it only has one variable
+        A = (300 - 1/2 * 200 - 1/2 * 300) / (1/8 * 100) = 4
+        B = (300 - 1/2 * 200 - 1/2 * 400 - 1/8 * 4 * 100) / (-1/8 * 100) = 4
+    Then the factor can be multiplied by the original vectors, concluding that
+        v0 = 4 * (100, 100) = (400, 400)
+        v1 = 4 * (100, 0) = (400, 0)
+    */
+
+    function doProblem2() {
+        points = [{x: 200, y: 200}, {x: 600, y: 600}, {x: 0, y: 300}, {x: 400, y: 300}];
+        updateHTML();
+        drawCanvas();
+    }
+
+</script>
+</body>
+</html>

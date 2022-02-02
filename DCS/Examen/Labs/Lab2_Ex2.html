@@ -1,0 +1,800 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 2.2</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+
+<body>
+
+<h1>DCS - 2.2 Properties of conics</h1>
+
+<canvas id="canvas1" height="600" width="600" class="bezier"  style="border:1px solid #d3d3d3; float:left; margin-right: 5px"></canvas>
+<br/>
+
+<div>
+    <button type="button" onclick="doReset()">Reset position</button>
+    <br/>
+    <br/>
+
+    <!-- PARABOLA PARAMETERS -->
+    <label>Parabola's parameters (y = a*x^2 + b*x + c)</label>
+    <br/>
+
+    <span id="a_param_block" name="a_param_block">
+        <label>a: </label>
+        <input type="text" id="a_param" name="a_param" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="0.005"/>
+        <label> Important! a != 0</label>
+        <br/>
+    </span>
+
+    <span id="b_param_block" name="b_param_block">
+        <label>b: </label>
+        <input type="text" id="b_param" name="b_param" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="0"/>
+        <br/>
+    </span>
+
+    <span id="c_param_block" name="c_param_block">
+        <label>c: </label>
+        <input type="text" id="c_param" name="c_param" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="0"/>
+        <br/>
+    </span>
+
+    <br/>
+    <!-- REFECTION BEAM -->
+    <label>Reflection Point</label>
+    <input type="checkbox" checked="checked" id="show_reflections"/>
+    <label>Show</label>
+    <br/>
+    <input type="range" min="-500" max="500" value="0.0" class="slider" id="reflection_point"/>
+    <br/>
+    <input type="checkbox" id="show_six_lines"/>
+    <label>Show 6 reflections</label>
+    <br/>
+    <br/>
+
+    <!-- FOCUS POINT -->
+    <label>Calculated Focus</label>
+    <br/>
+    <label>(</label>
+    <label id="calc_focus_x"></label>
+    <label>,</label>
+    <label id="calc_focus_y"></label>
+    <label>)</label>
+    <br/>
+
+    <label>Reflected Focus</label>
+    <br/>
+    <label>(</label>
+    <label id="proj_focus_x"></label>
+    <label>,</label>
+    <label id="proj_focus_y"></label>
+    <label>)</label>
+
+    <!-- INFO -->
+    <br/>
+    <br/>
+    <label>X axis in <span style="color:#FF6347">red</span></label>
+    <br/>
+    <label>Y axis in <span style="color:#32CD32">green</span></label>
+    <br/>
+    <label>Directrix in <span style="color:#1E90FF">blue</span></label>
+    <br/>
+    <label>Symmetry axis in <span style="color:rgba(80,80,80,1)">dark grey</span></label>
+    <br/>
+    <label>Tangent line in <span style="color:#8A2BE2">purple</span></label>
+    <br/>
+    <label>Reflection beams in <span style="color:#B8860B">ochre</span></label>
+    <br/>
+    <label>Reflection axis in <span style="color: rgba(150, 150, 150, 0.3)">light grey</span></label>
+
+</div>
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    //GLOBAL VARIABLES
+
+    var floatRegExp = RegExp('^[+-]?([0-9]*\.[0-9]+|[0-9]+)$');
+
+    var canvas1, context1, points, myTransformation, drag = null, draggedPoint;
+
+    var style, vector_style, line_style, segment_style, parabola_style;
+    var tangent_style, reflection_beam_style, directix_style, x_axis_style, y_axis_style, reflection_axis_style;
+
+    var a, b, c;
+    var center;
+    var prevMousePos;
+
+    var tolerance = 0.1;
+
+    var proj_focus, calc_focus;
+
+    var showReflections, showSixReflections;
+    var reflection_val;
+    var html_a, html_b, html_c, html_reflection, html_show_reflections, html_show_6_reflections;
+    var html_calc_focus_x, html_calc_focus_y, html_proj_focus_x, html_proj_focus_y;
+
+    // TODO replace these points but those of the corresponding conic function (on-the-fly)
+    points = [{ x:0, y:0 }];
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        // Translate origin to center of canvas
+        context1.translate(canvas1.width/2,canvas1.height/2);
+
+		// Flip y-axis, so it looks like in standard math axes
+        context1.scale(1,-1) // Reversed y-axis
+
+        //Set the canvas' center
+        prevMousePos = center = {
+            x : 0,
+            y : 0
+        }
+
+        //Set the parabola's parameters
+        a = 1 / 200;
+        b = 0;
+        c = 0;
+
+        proj_focus = undefined;
+
+        //Which reflections are shown
+        showReflections = true;
+        showSixReflections = false;
+        reflection_val = 0;
+
+        //Make the canvas movable
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+
+        //Define styles for all possible drawings
+        defineStyles();
+
+        //Interact with HTML
+        htmlInteractions();
+
+        drawCanvas();
+        changeFocus();
+    }
+
+    //Define styles for the program
+    function defineStyles() {
+        vector_style = {
+            line: {
+                color: "rgba(200, 200, 200, 0.8)",
+                width : 1
+            },
+            tip: {
+                color : "rgba(200,200,200,0.8)",
+                width : 3,
+                length : 10,
+                angle : Math.PI / 6
+            }
+        };
+
+        segment_style = {
+            color : "rgba(50, 230, 175, 0.8)",
+            width : 4
+        };
+
+        line_style = {
+            color : "rgba(180, 35, 95, 0.8)",
+            width : 3
+        };
+
+        parabola_style = {
+            color : "rgba(80, 80, 80, 1)",
+            width : 2
+        };
+
+        x_axis_style = {
+            color : "#FF6347",
+            width : 1
+        };
+
+        y_axis_style = {
+            color : "#32CD32",
+            width : 1
+        };
+
+        symmetry_axis_style = {
+            color : "#696969",
+            width : 2
+        };
+
+        directix_style = {
+            color : "#1E90FF",
+            width : 2
+        };
+
+        reflection_beam_style = {
+            color : "#B8860B",
+            width : 2
+        };
+
+        tangent_style = {
+            color : "#8A2BE2",
+            width : 2
+        };
+
+        reflection_axis_style = {
+            color : "rgba(150,150,150,0.3)",
+            width : 2
+        };
+    }
+
+    function getAndTestInput(regex, inputArray) {
+        var data = []
+        var correct = true;
+        for (let i = 0; i < inputArray.length; i++) {
+            var x = document.getElementById(inputArray[i]).value;
+            if (! regex.test(x)) {
+                document.getElementById(inputArray[i]).color = "red";
+                correct = false;
+            }
+            else document.getElementById(inputArray[i]).color = "black";
+            data.push(x);
+        }
+        return {data: data, correct: correct}
+    }
+
+    function htmlInteractions() {
+        //A PARAMETER
+        html_a = document.getElementById("a_param");
+        html_a.onchange = function() {
+            var input = getAndTestInput(floatRegExp, ["a_param"]);
+            if (input.correct) {
+                a = parseFloat(input.data[0]);
+            }
+            drawCanvas();
+            changeFocus();
+        };
+        html_a.value = a;
+
+        //B PARAMETER
+        html_b = document.getElementById("b_param");
+        html_b.onchange = function() {
+            var input = getAndTestInput(floatRegExp, ["b_param"]);
+            if (input.correct) {
+                b = parseFloat(input.data[0]);
+            }
+            drawCanvas();
+            changeFocus();
+        }
+        html_b.value = b;
+
+        //C PARAMETER
+        html_c = document.getElementById("c_param");
+        html_c.onchange = function() {
+            var input = getAndTestInput(floatRegExp, ["c_param"]);
+            if (input.correct) {
+                c = parseFloat(input.data[0]);
+            }
+            drawCanvas();
+            changeFocus();
+        }
+        html_c.value = c;
+
+        //Show Reflection Beams?
+        html_show_reflections = document.getElementById("show_reflections");
+        html_show_reflections.onchange = function() {
+            showReflections = !showReflections;
+            drawCanvas();
+        }
+        html_show_reflections.checked = showReflections;
+
+        //Show 6 pre-chosen beams?
+        html_show_6_reflections = document.getElementById("show_six_lines");
+        html_show_6_reflections.onchange = function() {
+            showSixReflections = !showSixReflections;
+            drawCanvas();
+        }
+        html_show_6_reflections.checked = showSixReflections;
+
+        //Beam X Position
+        html_reflection = document.getElementById("reflection_point");
+        html_reflection.oninput = function() {
+            reflection_val = parseFloat(html_reflection.value) / 1000;
+            if ((showReflections) && (! showSixReflections)) drawCanvas();
+        }
+        html_reflection.value = 0;
+
+        //Focus
+        html_calc_focus_x = document.getElementById("calc_focus_x");
+        html_calc_focus_y = document.getElementById("calc_focus_y");
+        html_proj_focus_x = document.getElementById("proj_focus_x");
+        html_proj_focus_y = document.getElementById("proj_focus_y");
+    }
+
+    function changeFocus() {
+        var x = -b / (2*a);
+        calc_point = {
+            x : x,
+            y : 2*(a*x*x + b*x + c) - (c - (b*b + 1)/(4*a))
+        }
+        html_calc_focus_x.innerHTML = calc_point.x;
+        html_calc_focus_y.innerHTML = calc_point.y;
+
+        if (proj_focus == undefined) {
+            html_proj_focus_x.innerHTML = "ERROR";
+            html_proj_focus_y.innerHTML = "ERROR";
+        } else {
+            html_proj_focus_x.innerHTML = proj_focus.x;
+            html_proj_focus_y.innerHTML = proj_focus.y;
+        }
+    }
+
+    /**
+     Methods to allow dragging the view around
+     **/
+
+    // start dragging
+    function dragStart(e) {
+        prevMousePos = mousePos(e);
+        drag = true;
+    }
+
+    // dragging
+    function dragging(e) {
+        if (drag) {
+            var currMousePos = mousePos(e);
+            canvas1.style.cursor = "move";
+            center = {
+                x : center.x + (prevMousePos.x - currMousePos.x),
+                y : center.y - (prevMousePos.y - currMousePos.y)
+            };
+            prevMousePos = currMousePos;
+            drawCanvas();
+        }
+    }
+
+    // end dragging
+    function dragEnd(e) {
+        drag = false;
+        canvas1.style.cursor = "default";
+    }
+
+    // event parser
+    function mousePos(event) {
+        event = (event ? event : window.event);
+        return {
+            x: event.pageX - canvas1.offsetLeft,
+            y: event.pageY - canvas1.offsetTop
+        }
+    }
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(-canvas1.width / 2, -canvas1.height / 2, canvas1.width, canvas1.height);  // Clear canvas
+        context1.clearRect(-canvas1.width / 2, -canvas1.height / 2, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+        var box = {
+            width : canvas1.width,
+            height : canvas1.height
+        };
+
+        // Draw axis
+        drawLine(context1, x_axis_style, center, box, {x: 0, y: 0, a: 0});
+        drawLine(context1, y_axis_style, center, box, {x: 0, y: 0, a: Math.PI / 2});
+
+        // Original points and vertices
+        drawLine(context1, symmetry_axis_style, center, box, {x: -b / (2*a), y: 0, a: Math.PI / 2});
+        drawLine(context1, directix_style, center, box, {x: 0, y: c - (b*b + 1)/(4*a), a: 0});
+        if (showReflections) {
+            if (showSixReflections) {
+                for (var i = 50; i <= 150; i+=50) {
+                    drawReflection(context1, reflection_beam_style, center, box, (-b / (2*a)) + i, a, b, c);
+                    drawReflection(context1, reflection_beam_style, center, box, (-b / (2*a)) - i, a, b, c);
+                }
+            }
+            else {
+                drawReflection(context1, reflection_beam_style, center, box, center.x + reflection_val * box.width, a, b, c);
+            }
+        }
+        drawParabola(context1, parabola_style, center, box, a, b, c);
+        changeFocus();
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        var half_width = bw/2;
+        var half_height = bh/2;
+        for (var x = -half_width; x <= half_width; x += delta) {
+            myContext.moveTo(x, -half_height);
+            myContext.lineTo(x, half_height);
+        }
+
+        for (var y = -half_height; y <= half_height; y += delta) {
+            myContext.moveTo(-half_width, y);
+            myContext.lineTo(half_width , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        // Draw curve
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+        var firstPoint = transformation(points[0]);
+        var currentPoint;
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+        for (var i = 0; i < points.length; i++) {
+            currentPoint =  transformation(points[i]);
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+        }
+        ctx.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices(ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    //Draw a vector (passed as two points in space)
+    /*
+    style = {
+        line : {
+            color : "#FCFCFC", / "rgba(200,200,200,0.5)"
+            width : 1
+        },
+        tip : {
+            color : "#FCFCFC",
+            width : 3,
+            length : 10
+            angle : Math.PI / 6
+        }
+    }
+    */
+    function drawVector(context, style, vector) {
+        var dx = vector[1].x - vector[0].x;
+        var dy = vector[1].y - vector[0].y;
+        var angle = Math.atan2(dx, dy);
+
+        //Draw line
+        context.beginPath();
+        context.moveTo(vector[0].x, vector[0].y);
+        context.lineTo(vector[1].x, vector[1].y);
+        context.strokeStyle = style.line.color;
+        context.lineWidth = style.line.width;
+        context.stroke();
+
+        //Draw tip
+        context.beginPath();
+        context.moveTo( vector[1].x - style.tip.length * Math.cos(angle - style.tip.angle),
+                        vector[1].y - style.tip.length * Math.sin(angle - style.tip.angle));
+        context.lineTo(vector[1].x, vector[1].y);
+        context.lineTo( vector[1].x - style.tip.length * Math.cos(angle + style.tip.angle),
+                        vector[1].y - style.tip.length * Math.sin(angle + style.tip.angle));
+        context.strokeStyle = style.tip.color;
+        context.lineWidth = style.tip.width;
+        context.stroke();
+    }
+
+    /*
+    METHOD OVERRIDE to include a center
+    center = {
+        x : 15,
+        y : 5
+    }
+    */
+   function drawVectorCentered(context, style, center, vector) {
+       var point_a_corrected = {
+           x : vector[0].x - center.x,
+           y : vector[0].y - center.y
+       };
+       var point_b_corrected = {
+           x : vector[1].x - center.x,
+           y : vector[1].y - center.y
+       };
+        drawVector(context, style, [point_a_corrected, point_b_corrected]);
+   }
+
+    // Intersection of two lines. If they are parallel or coincident, returns undefined
+    /*
+    line = {
+        x : 15, //x position of the guide point
+        y : 5,  //y position of the guide point
+        a : Math.PI / 2  //angle of the line (in rad)
+    }
+    */
+    function lineIntersection(line1, line2) {
+        var norm_a1 = line1.a % Math.PI;
+        var norm_a2 = line2.a % Math.PI;
+        if ((Math.max(norm_a1, norm_a2) - Math.min(norm_a1, norm_a2)) < tolerance) return undefined; //Check if parallel or coincident
+        var u1 = Math.cos(line1.a);
+        var v1 = Math.cos(line2.a);
+        var u2 = Math.sin(line1.a);
+        var v2 = Math.sin(line2.a);
+        var numerator = (line1.y - line2.y) * u1 + (line2.x - line1.x) * u2;
+        var denominator = (v2 * u1) - (v1 * u2);
+        var lambda = numerator / denominator;
+        return {
+            x: line2.x + lambda * v1,
+            y: line2.y + lambda * v2
+        }
+    }
+
+    //Checks if a point is in a line
+    /*
+    point = {
+        x : 15,
+        y : 5
+    }
+    */
+    function checkInLine(point, origin, end) {
+        var dy_point = (point.y - origin.y);
+        var dy_end = (end.y - origin.y);
+        var dx_point = (point.x - origin.x);
+        var dx_end = (end.x - origin.x);
+        var dx_dy_1 = dy_point / dx_end;
+        var dx_dy_2 = dy_end / dx_point;
+        return ((Math.max(dx_dy_1, dx_dy_2) - Math.min(dx_dy_1, dx_dy_2)) < tolerance);
+    }
+
+    function checkInSegment(point, origin, end) {
+        var distOriginPoint = Math.sqrt(Math.pow(point.x - origin.x, 2) + Math.pow(point.y - origin.y, 2));
+        var distPointEnd = Math.sqrt(Math.pow(end.x - point.x, 2) + Math.pow(end.y - point.y, 2));
+        var distOriginEnd = Math.sqrt(Math.pow(end.x - origin.x, 2) + Math.pow(end.y - origin.y, 2));
+
+        return ((Math.max(distOriginPoint + distPointEnd, distOriginEnd) - Math.min(distOriginPoint + distPointEnd, distOriginEnd)) < tolerance);
+    }
+
+    //Draw a segment
+    /*
+    style = {
+        color : "#FCFCFC" / "rgba(200, 200, 200, 0.5)",
+        width : 1
+    }
+    point_a = {
+        x : 15,
+        y : 5
+    }
+    point_b = {
+        x : 15,
+        y : 5
+    }
+    */
+   function drawSegment(context, style, point_a, point_b) {
+       context.beginPath();
+       context.moveTo(point_a.x, point_a.y);
+       context.lineTo(point_b.x, point_b.y);
+       context.strokeStyle = style.color;
+       context.lineWidth = style.width;
+       context.stroke();
+   }
+
+    /*
+    METHOD OVERRIDE to include a center
+    center = {
+        x : 15,
+        y : 5
+    }
+    */
+   function drawSegmentCentered(context, style, center, point_a, point_b) {
+       var point_a_corrected = {
+           x : point_a.x - center.x,
+           y : point_a.y - center.y
+       };
+       var point_b_corrected = {
+           x : point_b.x - center.x,
+           y : point_b.y - center.y
+       }
+       drawSegment(context, style, point_a_corrected, point_b_corrected);
+   }
+
+    //Draw a line that collides with a bounding box (only draw a segment inside a box)
+    /*
+    line = {
+        x : 15,
+        y : 5,
+        a : Math.PI / 2 (rad)
+    }
+    center = {
+        x : 15,
+        y : 5
+    }
+    box = {
+        width = 640,
+        height = 480
+    }
+    */
+    function drawLine (context, style, center, box, line) {
+        var half_width = box.width / 2;
+        var half_height = box.height / 2;
+
+        var norm_a = line.a % Math.PI;
+        while (norm_a < 0) norm_a = (norm_a + Math.PI) % Math.PI;
+
+        var top_intersect = lineIntersection(line, { x: center.x, y: center.y + half_height, a: 0 });
+        var bot_intersect = lineIntersection(line, { x: center.x, y: center.y - half_height, a:0 });
+        var left_intersect = lineIntersection(line, { x: center.x - half_width, y: center.y, a: Math.PI / 2 });
+        var right_intersect = lineIntersection(line, { x: center.x + half_width, y: center.y, a: Math.PI / 2 });
+
+        if ((top_intersect == undefined) || (bot_intersect == undefined)) drawSegmentCentered(context, style, center, left_intersect, right_intersect);
+        else if ((left_intersect == undefined) || (right_intersect == undefined)) drawSegmentCentered(context, style, center, top_intersect, bot_intersect);
+        else {
+            var points = [];
+            var top_left = { x: center.x - half_width, y: center.y + half_height };
+            var top_right = { x: center.x + half_width, y: center.y + half_height };
+            var bot_left = { x: center.x - half_width, y: center.y - half_height };
+            var bot_right = { x: center.x + half_width, y: center.y - half_height };
+            if (norm_a < (Math.PI / 2)) {
+                if (checkInSegment(left_intersect, top_left, bot_left)) points.push(left_intersect);
+                else if (checkInSegment(bot_intersect, bot_left, bot_right)) points.push(bot_intersect);
+                else return;
+                if (checkInSegment(top_intersect, top_left, top_right)) points.push(top_intersect);
+                else if (checkInSegment(right_intersect, top_right, bot_right)) points.push(right_intersect);
+                else return;
+            } else {
+                if (checkInSegment(left_intersect, top_left, bot_left)) points.push(left_intersect);
+                else if (checkInSegment(top_intersect, top_left, top_right)) points.push(top_intersect);
+                else return;
+                if (checkInSegment(bot_intersect, bot_left, bot_right)) points.push(bot_intersect);
+                else if (checkInSegment(right_intersect, bot_right, top_right)) points.push(right_intersect);
+                else return;
+            }
+            drawSegmentCentered(context, style, center, points[0], points[1]);
+        }
+    }
+
+    //Draw a parabola
+    /*
+    y = a*x^2 + b*x + c
+    style = {
+        color : "#FCFCFC" / "rgba(200,200,200,0.5)",
+        width : 1
+    }
+    box = {
+        width : 640,
+        height : 480
+    }
+    */
+    function drawParabola(context, style, center, box, a, b, c) {
+        //Calculate the collision points with the margins
+        var init, end;
+        var half_height;
+        if (((a > 0) && (center.y + box.height > c)) || ((a < 0) && (center.y - box.height < c))) { //Check if the parabola begins inside the box's range
+            var aux = Math.sqrt(b*b - 4*a*(c - center.y + ((a > 0) ? - box.height : box.height)/2));
+            end = (-b + aux) / (2*a);
+            init = (-b - aux) / (2*a);
+            if (end < init) {
+                aux = end;
+                end = init;
+                init = aux;
+            }
+        }
+
+        if (! ((init > (center.x + box.width)) || (end < (center.x - box.width)))) {
+            if (init < (center.x - box.width)) init = center.x - box.width;
+            if (end > (center.x + box.width)) end = center.x + box.width;
+
+            //To cancel any float errors
+            init -= 2;
+            end += 2;
+
+            //Draw every subsection
+            context.beginPath();
+            context.moveTo(init - center.x, a*init*init + b*init + c - center.y);
+            for (var i = Math.floor(init); i < Math.ceil(end); i++) {
+                context.lineTo(i - center.x, a*i*i + b*i + c - center.y);
+            }
+            context.strokeStyle = style.color;
+            context.lineWidth = style.width;
+            context.stroke();
+        }
+    }
+
+    function drawReflection(context, style, center, box, x, a, b, c) {
+        var projecting_y, y;
+
+        //Falling beam
+        if (a > 0) projecting_y = center.y + box.height/2; //If it has U shape, come from above
+        else projecting_y = center.y - box.height/2; //If not, come from below
+
+        y = a*x*x + b*x + c;
+        drawSegmentCentered(context, style, center, {x:x, y:projecting_y}, {x:x, y:y}); //Join top/bottom with the parabola using a segment
+
+        //Calculate and draw tangent
+        var tangentSlope = 2*a*x + b; //Calculate the paravola's derivative
+        var angle = Math.atan2(tangentSlope, 1); //Calculate the angle of the derivative's guide vector
+        if (!showSixReflections) drawLine(context, tangent_style, center, box, {x:x, y:y, a:angle}); //Draw the derivative line in that point
+
+        if (!showSixReflections) drawLine(context, reflection_axis_style, center, box, {x:x, y:y, a:Math.PI/2 + angle}); //Draw the reflection axis, perpendicular to the derivative
+
+        //Calculate and draw the reflection of the falling beam with tangent to find the line that intersected with the parabola's symmetry axis yields the focus
+        var reflectedAngle = Math.PI - (Math.PI/2 - angle) + angle; //The angle between the vertical segment (Math.PI/2) and the derivative's angle must be the same as the reflection with the derivative
+        proj_focus = lineIntersection({x: -b / (2*a), y:0, a:Math.PI / 2}, {x:x, y:y, a:reflectedAngle}); //Intersect the reflected line with the parabola's symmetry axis to calculate the focus
+        if (!(proj_focus == undefined)) drawSegmentCentered(context, style, center, {x:x, y:y}, proj_focus); //If the reflected line isn't vertical, draw the segment from the parabola to the focus
+    }
+
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    /**
+     * Auxiliary functions
+     */
+
+
+    function doReset () {
+        myTransformation = function(p){return p}; //Identity transform
+        center = {
+            x : 0,
+            y : 0
+        }
+        drawCanvas();
+    }
+
+    // This is just an example
+    function computeConic() {
+        // to something
+        alert('Code to be written!');
+        drawCanvas();
+    }
+
+</script>
+</body>
+</html>

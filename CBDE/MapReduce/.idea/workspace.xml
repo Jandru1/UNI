@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="30217cc1-06b3-46dc-8d35-c332995670b2" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="1kmFQARGU81wAfJhK2ZJof3OcSF" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../MapReduceEntrega" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="bdm.labs" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="MainLocal" type="Application" factoryName="Application" nameIsGenerated="true">
+      <envs>
+        <env name="Path" value="C:\Users\agome\OneDrive\Documentos\UNI\CBDE\MapReduce\resources\winutils\bin" />
+      </envs>
+      <option name="MAIN_CLASS_NAME" value="bdm.labs.MainLocal" />
+      <module name="mapreduce1" />
+      <option name="PROGRAM_PARAMETERS" value="-aggregationSum resources/adult.1000.sf resources/cartesian.out " />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="30217cc1-06b3-46dc-8d35-c332995670b2" name="Default Changelist" comment="" />
+      <created>1606297840135</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1606297840135</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="149" y="0" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606324568994">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="149" y="0" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1280.680@0.0.1280.680" timestamp="1606324568994" />
+    <state x="383" y="151" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1606311899386">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="383" y="151" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1280.680@0.0.1280.680" timestamp="1606311899386" />
+    <state x="421" y="48" key="#com.intellij.ide.macro.MacrosDialog" timestamp="1606306560068">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="421" y="48" key="#com.intellij.ide.macro.MacrosDialog/0.0.1280.680@0.0.1280.680" timestamp="1606306560068" />
+    <state x="371" y="122" key="#com.intellij.ide.util.PackageChooserDialog" timestamp="1606302265196">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="371" y="122" key="#com.intellij.ide.util.PackageChooserDialog/0.0.1280.680@0.0.1280.680" timestamp="1606302265196" />
+    <state x="371" y="130" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1606297897133">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="371" y="130" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1280.680@0.0.1280.680" timestamp="1606297897133" />
+    <state x="376" y="105" key="EnvironmentVariablesDialog" timestamp="1606297932235">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="376" y="105" key="EnvironmentVariablesDialog/0.0.1280.680@0.0.1280.680" timestamp="1606297932235" />
+    <state x="421" y="99" key="FileChooserDialogImpl" timestamp="1606381698626">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="421" y="99" key="FileChooserDialogImpl/0.0.1280.680@0.0.1280.680" timestamp="1606381698626" />
+    <state width="1237" height="45" key="GridCell.Tab.0.bottom" timestamp="1606331723304">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="45" key="GridCell.Tab.0.bottom/0.0.1280.680@0.0.1280.680" timestamp="1606331723304" />
+    <state width="1237" height="45" key="GridCell.Tab.0.center" timestamp="1606331723304">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="45" key="GridCell.Tab.0.center/0.0.1280.680@0.0.1280.680" timestamp="1606331723304" />
+    <state width="1237" height="45" key="GridCell.Tab.0.left" timestamp="1606331723304">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="45" key="GridCell.Tab.0.left/0.0.1280.680@0.0.1280.680" timestamp="1606331723304" />
+    <state width="1237" height="45" key="GridCell.Tab.0.right" timestamp="1606331723304">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="45" key="GridCell.Tab.0.right/0.0.1280.680@0.0.1280.680" timestamp="1606331723304" />
+    <state x="171" y="0" key="Maven.ArtifactSearchDialog" timestamp="1606302203144">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="171" y="0" key="Maven.ArtifactSearchDialog/0.0.1280.680@0.0.1280.680" timestamp="1606302203144" />
+    <state x="121" y="0" key="SettingsEditor" timestamp="1606297877343">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="121" y="0" key="SettingsEditor/0.0.1280.680@0.0.1280.680" timestamp="1606297877343" />
+    <state x="644" y="204" key="com.intellij.ide.util.TipDialog" timestamp="1606381667519">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="644" y="204" key="com.intellij.ide.util.TipDialog/0.0.1280.680@0.0.1280.680" timestamp="1606381667519" />
+    <state x="297" y="151" key="run.anything.popup" timestamp="1606311033562">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="297" y="151" key="run.anything.popup/0.0.1280.680@0.0.1280.680" timestamp="1606311033562" />
+  </component>
+</project>

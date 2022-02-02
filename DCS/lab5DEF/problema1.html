@@ -1,0 +1,224 @@
+<html>
+     <head>
+     <title>DCS - 5</title>
+
+     </head>
+
+     <body>
+
+     <h1>DCS - Lab 5 - Surfaces</h1>
+
+     <script src="math.min.js"></script>
+   <script src="three.min.js"></script>
+   <script src="OrbitControlsDCS.js"></script>
+
+    <script type="text/javascript">
+       /**
+       * Partially based on code by Ikaros Kappler from http://int2byte.de/public/blog.20160129_Three.js_Basic_Scene_Setup/
+       **/
+   var windowWidth=800.0, windowHeight=600.0;
+
+       // Create a scene
+       this.scene = new THREE.Scene();
+
+       // Create a camera
+   // Parameters: vertical field of view, aspect ratio, near-clipping plane, far-clipping plane
+   var camera = new THREE.PerspectiveCamera(45, windowWidth / windowHeight, 0.1, 1000);
+
+       // Create a THREE renderer
+       this.renderer = new THREE.WebGLRenderer( { antialias : true, alpha:true } );
+       this.shadowMapEnabled = true;
+       this.renderer.setSize(windowWidth, windowHeight);
+       document.body.appendChild(renderer.domElement); // append it to the DOM
+
+       // position and point the camera to the center of the scene (0,0,0)
+       camera.position.x = 50;
+       camera.position.y = 60;
+       camera.position.z = 50;
+       camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+   // Create light, with same position and direction as camera
+       this.spotLight = new THREE.SpotLight(0xffffff);
+   this.spotLight.position.copy(camera.position)
+   this.spotLight.target.position.copy (camera.lookAt);
+       scene.add(spotLight);
+
+
+   /**** Here is where the important stuff is: definition of parametric geometry ****/
+   // Examples of three parametric surface functions
+
+   // Note: the parametric functions will be evaluated only on [0,1] x [0,1]
+   // The function is called like this:
+   // for v=0 to 1 step ...
+   //    for u=0 to 1  step...
+   //        call function(u,v)
+
+   planeFunction = function(u, v)
+   {
+     var s = this.functionExtent; //stretch value
+     var x = s*u;
+     var z = s*v;
+     var y = 15*(u+v);
+     return new THREE.Vector3(x, y, z);
+   };
+
+   waveFunction = function (u, v) {
+           var s = this.functionExtent; //stretch value
+           var x = s*u;
+     var z = s*v;
+           var y = 10*Math.sin(2*(u+v)*Math.PI);
+           return new THREE.Vector3(x, y, z);
+   };
+
+   ellipsoidFunction = function (u, v) {
+     var a=40;
+     var b=20;
+     var c=30;
+     u = u * 2* Math.PI; // scale u to [0, 2PI]
+     v = v * Math.PI; // scale v to [0, PI]
+           var x = a*Math.cos(u)*Math.sin(v);
+     var z = b*Math.sin(u)*Math.sin(v);
+           var y = c*Math.cos(v);
+           return new THREE.Vector3(x, y, z);
+   };
+
+       hyperboloidFunction = function (u, v) {
+           var a = Math.PI / 2;
+           var s = this.functionExtent;
+
+           // Scale a vector by a scalar
+           var scale_vec_3 = function (vec, scalar) {
+               var x = vec.x * scalar;
+               var y = vec.y * scalar;
+               var z = vec.z * scalar;
+
+               return {x: x, y: y, z: z};
+           }
+
+           // Translate a point using a vector
+           var translate_vec_3 = function (vec_1, vec_2) {
+               var x = vec_1.x + vec_2.x;
+               var y = vec_1.y + vec_2.y;
+               var z = vec_1.z + vec_2.z;
+
+               return {x: x, y: y, z: z};
+           }
+
+           // Create two lines in parametric form
+           var line_1 = function (lambda) {
+               // Calculate the line that on lambda = 0, intersects with the plane y = 0 and has an angle of 90º - (a / 2) with such plane
+               var point = {x: 0, y: 0, z: s}; // The point of intersection with the plane
+               var vector = {x: s, y: s * Math.sin((Math.PI - a) / 2), z: 0}; // The direction vector
+
+               return translate_vec_3(point, scale_vec_3(vector, lambda)); // Return the calculated point
+           }
+
+           var line_2 = function (lambda) {
+               // Line 2 is almost like Line 1
+               var point = {x: s, y: 0, z: 0}; // The point of intersection with the plane
+               var vector = {x: -s, y: s * Math.sin((Math.PI - a) / 2), z: 0}; // The direction vector
+
+               return translate_vec_3(point, scale_vec_3(vector, lambda));
+           }
+
+           // Get current line's points, where u represents the position of the intersecting plane
+           var point_1 = line_1(u);
+           var point_2 = line_2(u);
+
+           // Calculate the direction vector, the difference between the two calculated points in the line
+           var vector = translate_vec_3(point_2, scale_vec_3(point_1, -1));
+
+           // Calculate the final point
+           var point = translate_vec_3(point_1, scale_vec_3(vector, v));
+
+           return new THREE.Vector3(point.x, point.y, point.z);
+       };
+
+   // Function to create the actual mesh
+       function createMesh(geom) {
+     // Translate geometry to center of scene
+           geom.applyMatrix(new THREE.Matrix4().makeTranslation(-functionExtent/2, 0, -functionExtent/2));
+           // Assign material
+           var meshMaterial = new THREE.MeshLambertMaterial({color:0xff5555, wireframe:false}); // You can disable wireframe
+           meshMaterial.side = THREE.DoubleSide;
+           // create a multimaterial and return it
+           return THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial]);
+       }
+
+   // Create and add parametric surface function (i.e., parametric geometry) to scene
+   this.functionExtent = 60;
+   var slides = functionExtent/3; //Number of evaluations on first variable
+   var stacks = functionExtent/3; //Number of evaluations on second variable
+
+   //var parametricFunction = planeFunction; // Example 1
+   //var parametricFunction = waveFunction;  // Example 2
+   //var parametricFunction = ellipsoidFunction;  // Example 3
+
+       var parametricFunction = hyperboloidFunction;
+
+   // Create parametric geometry based on parametric function
+   var graphGeometry = new THREE.ParametricGeometry(parametricFunction, slides, stacks);
+
+   // Add it to scene
+   this.scene.add(createMesh(graphGeometry));
+
+   /****************************/
+
+   // Auxiliary things
+
+       // Add grid helper
+   var gridExtent=80;
+       var gridHelper = new THREE.GridHelper( gridExtent, gridExtent/10 );
+       gridHelper.colorGrid = 0xE8E8E8;
+       this.scene.add( gridHelper );
+
+       // Add an axis helper
+       var ah = new THREE.AxisHelper(50);
+       ah.position.y -= 0.1;  // The axis helper should not interfere with the grid helper
+       this.scene.add( ah );
+
+       // Add an orbit control helper, to navigate scence with mosue
+       var _self = this;
+       this.orbitControls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+       // Always move the point light with the camera. Looks much better ;)
+       this.orbitControls.addEventListener( 'change',
+       function() { _self.spotLight.position.copy(_self.camera.position); }
+       );
+       this.orbitControls.enableDamping = true;
+       this.orbitControls.dampingFactor = 1.0;
+       this.orbitControls.enableZoom    = true;
+       this.orbitControls.target.copy(new THREE.Vector3(0, 0, 0));
+
+       // This is the basic render function. It will be called perpetual, again and again,
+       // depending on your machines possible frame rate.
+       this._render = function () {
+           // Pass the render function itself
+           requestAnimationFrame(this._render);
+           this.renderer.render(this.scene, this.camera);
+       };
+
+       // Call the rendering function. This will cause an infinite recursion
+       this._render();
+
+     </script>
+     <br/>
+   Note: X axis is red, Y axis is green, Z axis is blue.
+   Each grid square on the plane Y=0 has size 10x10.
+ </body><br><br>
+         1st step: Assume 2 screw lines crossing the plane. Get parametrization of both of them.
+   <br>
+         2nd step: We get de 1st point on the first line.
+   <br>
+         3rd step: We got the 2nd point on the second line, being z the same value as P1.z.
+   <br>
+         4rd: calculate the vector and the corresponding point.
+   <br>
+   So:
+   <br>
+   P1(p1x, p1y, p1z) and P2(p2x,p2y,p2z) <br>
+   So as they have to be parallel to plane: p2z = p1z
+   <br>
+   So (1-u)P2 + u(P1)<br> = ((1-u)+p2x, (1-u)*p2y, (1-u)*<strong>p1z</strong>) + (p1xu, p1yu, p1zu)<br> = ((1-u)*p2x + p1xu, (1-u)*p2y + p1yu, p1z)
+
+
+     </html>

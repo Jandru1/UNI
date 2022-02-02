@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 2.2</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+
+<body>
+
+<h1>DCS - 2.2 Properties of conics</h1>
+
+<canvas id="canvas1" height="600" width="600" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<br>
+<button type="button" onclick="doReset()">Reset</button>
+<button type="button" onclick="computeConic()">Draw some conic</button>
+
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, context1, points, myTransformation, style, drag = null, draggedPoint;
+
+    // TODO replace these points but those of the corresponding conic function (on-the-fly)
+    points = [{ x:0, y:0 }];
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        newStyle = {
+          curve:	{ width: 6, color: "#8cbeb2" },
+          line:	{ width: 1, color: "#8cbeb2" },
+          point: { radius: 10, width: 2, color: "#8cbeb2", fill: "rgba(244,114,208,0.5)", arc1: 0, arc2: 2 * Math.PI }
+      }
+
+        reflectedStyle = {
+            curve:	{ width: 6, color: "#00ff84" },
+            line:	{ width: 1.5, color: "#00ff84" },
+            point: { radius: 10, width: 2, color: "#00ff84", fill: "rgba(244,114,208,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        verticalLines = [
+                [{x: -125, y:78.125}, {x: -125, y:500}],
+                [{x: -75, y:28.125}, {x: -75, y:500}],
+                [{x: -25, y:3.125}, {x: -25, y:500}],
+                [{x: 25, y:3.125}, {x: 25, y: 500}],
+                [{x: 75, y:28.125}, {x: 75, y: 500}],
+                [{x: 125, y:78.125}, {x: 125, y:500}]];
+
+        reflected = [];
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        // Translate origin to center of canvas
+        context1.translate(canvas1.width/2,canvas1.height/2);
+
+		// Flip y-axis, so it looks like in standard math axes
+		context1.scale(1,-1) // Reversed y-axis
+
+        drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+      // context1.clearRect(0, 0, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+        // Original points and vertices
+        drawCurve(context1, style, points); // Draw curve
+        drawVertices(context1, style, points); // Draw vertices as circles
+
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        var half_width = bw/2;
+        var half_height = bh/2;
+        for (var x = -half_width; x <= half_width; x += delta) {
+            myContext.moveTo(x, -half_height);
+            myContext.lineTo(x, half_height);
+        }
+
+        for (var y = -half_height; y <= half_height; y += delta) {
+            myContext.moveTo(-half_width, y);
+            myContext.lineTo(half_width , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        // Draw curve
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+        var firstPoint = transformation(points[0]);
+        var currentPoint;
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+        for (var i = 0; i < points.length; i++) {
+            currentPoint =  transformation(points[i]);
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+        }
+        ctx.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    /**
+     * Auxiliary functions
+     */
+
+
+    function doReset () {
+        myTransformation = function(p){return p}; //Identity transform
+        drawCanvas();
+    }
+
+  // This is just an example
+    function computeConic() {
+        conic();
+        draw6verticalLines();
+        drawReflectedLines();
+        drawCanvas();
+    }
+
+    function conic(){
+        points = [];
+        for(var x = -400; x <= 400; x+= 25){
+            var y = (x*x)/200; // Input function -> Parabola function
+            points.push({x: x, y: y});
+        }
+    }
+
+    function draw6verticalLines(){
+    for(var i = 0; i < verticalLines.length; i += 1){
+        drawCurve(context1, style, verticalLines[i]);
+    }
+}
+
+    function drawReflectedLines(){
+        var sign = 1;
+        for(var i = 0; i < verticalLines.length; ++i){
+            if(i >= 3) sign = -1;
+            drawReflectedLine(verticalLines[i], sign);
+        }
+    }
+
+    function drawReflectedLine(line, sign){
+        var p = [{x: line[0].x, y: line[0].y}];
+        var tangent = p[0].x / 100.0;
+        var alpha = Math.atan(tangent);
+        var beta = Math.PI / 2.0 - alpha;
+        var line2 = Math.tan(alpha - beta + Math.PI);
+        var resLine = reflect(line2, line[0].x, line[0].y );
+
+        p.push({x: sign*400, y: resLine.m * (sign*400) + resLine.a});
+        drawCurve(context1, style, p);
+        reflected.push(p);
+    }
+
+    function reflect(m, x, y){
+        return {m: m, a:m*(-x) + y};
+    }
+
+
+</script>
+</body>
+</html>

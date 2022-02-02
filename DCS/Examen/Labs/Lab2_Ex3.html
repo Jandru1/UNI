@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 2.3</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+
+<body>
+
+<h1>DCS - 2.3 Curve parametrization</h1>
+
+<canvas id="canvas1" height="600" width="1000" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<br>
+<label>Radius: </label>
+<input type="text" id="radius" name="radius" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="23.8732414638"/>
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var floatRegExp = RegExp('^[+-]?([0-9]*\.[0-9]+|[0-9]+)$');
+
+    var canvas1, context1, points, style, drag = null, draggedPoint;
+    var html_radius;
+
+    var radius = 47.7464829276;
+
+    points = [{ x:0, y:0 }];
+
+    function init() {
+
+        // default styles
+        style = {
+            curve:	{ width: 3, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        //Set the axis according to math conventions
+        context1.scale(1,-1);
+
+		// Translate origin to the middle left
+        context1.translate(0, -canvas1.height/2);
+
+        html_radius = document.getElementById("radius");
+        html_radius.onchange = function() {
+            var input = getAndTestInput(floatRegExp, ["radius"]);
+            if (input.correct) {
+                radius = parseFloat(input.data[0]);
+                drawCanvas();
+            }
+        }
+        html_radius.value = radius;
+
+        drawCanvas();
+    }
+
+    function getAndTestInput(regex, inputArray) {
+        var data = []
+        var correct = true;
+        for (let i = 0; i < inputArray.length; i++) {
+            var x = document.getElementById(inputArray[i]).value;
+            if (! regex.test(x)) {
+                document.getElementById(inputArray[i]).color = "red";
+                correct = false;
+            }
+            else document.getElementById(inputArray[i]).color = "black";
+            data.push(x);
+        }
+        return {data: data, correct: correct}
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.beginPath(); //To eliminate ghosting, create an empty path
+        context1.stroke();
+        context1.clearRect(0, canvas1.height / 2, canvas1.width, -canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+
+        // Original points and vertices // In principle there are no vertices to draw here
+        drawCurve(context1, style, canvas1.width, points); // Draw curve
+        //drawVertices(context1, style, points); // Draw vertices as circles
+        drawCircle(context1, {width: 1, color:"rgba(150,150,150,0.3)"}, {x:Math.PI*radius, y:radius}, radius);
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        var half_width = bw/2;
+        var half_height = bh/2;
+
+        for (var x = 0; x <= bw; x += delta) {
+            myContext.moveTo(x, -half_height);
+            myContext.lineTo(x, half_height);
+        }
+
+        for (var y = -half_height; y <= half_height; y += delta) {
+            myContext.moveTo(0, y);
+            myContext.lineTo(bw , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+
+        myContext.strokeStyle = "black";
+        myContext.font = "12px Arial";
+
+        myContext.scale(1, -1); //To make the text not look inverted
+        myContext.fillText("(0,0)", 2, 12);
+        myContext.scale(1, -1); //Correct the axis again
+
+    }
+
+    // Draws a polygonal curve
+    function drawCurve(ctx, style, width, points) {
+
+        // TODO: write your code to draw the (right) curve here
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+
+        //Start the curve
+        var firstPoint = points[0];
+        var currentPoint;
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+
+        //Calculate how many steps the curve must take until reaching the end of the canvas
+        var numDivisions = 128; //Enough divisions to seem smooth
+        var stepRads = (2*Math.PI) / numDivisions; //Know how many radians each step will be
+        var numIter = width / (2 * Math.PI * radius) * numDivisions; //Calculate how many steps must be done to cover all the canvas
+        numIter += 2 * stepRads; //In case floating point operations have errors, add a couple more steps to fill the canvas
+
+        for (var i = 0; i < numIter; i=i+stepRads) {
+			// TODO: replace this by the right parametrization
+			//Initialize point at the center of coordinates
+			currentPoint = {x: 0, y: 0};
+			//Translate the point as much as how much the circle has rotated, which is relative to the perimeter of the circle
+			currentPoint.x = currentPoint.x + i*radius;
+			//Elevate the point to the center of the circle
+			currentPoint.y = currentPoint.y + radius;
+
+			//Translate the point to where it has rotated around the circle, translating by the vector that goes
+			//from the center to the "edge" of the circle.
+
+			//The cosine and sine for each component were chosen because it begins at 270º and rotates clock-wise
+
+			//It's x is reigned by the negative sine of the angle rotated, because it begins going left and begins at x:0.
+			currentPoint.x = currentPoint.x - Math.sin(i) * radius;
+			//It's y is reigned by the negative cosine of the angle rotated, because it begins going upward and begins at y: -1.
+			currentPoint.y = currentPoint.y - Math.cos(i) * radius;
+
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+
+            /*
+            I came up with this solution quickly, it was quite similar to the cardioid we had already done
+            My solution to the cardioid involved almost the same steps, but instead of rotating around a circle in the first part,
+            this formula advances as much as how much of the perimeter it has rotated around, and then applies the
+            cosine/sine translation from being at the edge of the circle
+            */
+        }
+        ctx.stroke();
+
+    }
+
+    function drawCircle(context, style, center, radius) {
+        //Set the number of iterations
+        var numDivisions = 128;
+        var stepRads = (2*Math.PI) / numDivisions;
+
+        //Initiate the circle
+        context.lineWidth = style.width;
+        context.strokeStyle = style.color;
+        context.beginPath();
+        context.moveTo(center.x + radius, center.y);
+
+        for (var t = 0; t < numDivisions; t += stepRads) {
+            context.lineTo(center.x + radius*Math.cos(t), center.y + radius*Math.sin(t));
+        }
+        context.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    /**
+     * Auxiliary functions
+     */
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 3.3</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+
+<body>
+
+<h1>DCS - 3.3 Cubic Hermite interpolation</h1>
+
+<canvas id="canvas1" height="600" width="800" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<br>
+<button type="button" onclick="ComputeAtT()">Compute the position of the curve at </button>
+<input type="text" id="T" name="T" placeholder="t =" required><h1>
+    <h1>
+
+ 4.1. Compute the position of the curve at t = 1/2.
+    <h1>
+      Knowing the value of t, to compute the position of the curve we just have to find the coordinates following the expression we learnt in class:
+    <h1>
+      γ(t) = (2t^3 − 3t^2 + 1)P0 + (−2t^3 + 3t^2)P1 + (t^3 − 2t^2 + t)→v0 + (t^3 − t^2)→v1
+<h1>
+  So:
+  <h1>
+    x = (2t^3+1-3t^2)*200 + (t^3-2t^2+t)*100 + (-2t^3+3t^2)400 + (t^3-t^2)*100
+    <h1>
+    x = 100 + 12.5 + 200 -12.5 = 300
+<h1>
+    y = (2t^3+1-3t^2)*200 + (t^3-2t^2+t)*100 + (-2t^3+3t^2)300 + (t^3-t^2)*0
+<h1>
+    y = 100 + 12.5 + 150 = 262.5
+<h1>
+  The computed value is (300,262.5).
+<br>
+  In order to get the values of the tangent with P(300, 300) and t = 1/2 we do the following operations. <br>
+
+  We have to use the 'n' and 'm' parameters, like that: <br>
+
+  γ(t) = (2t^3 − 3t^2 + 1)P0 + (−2t^3 + 3t^2)P1 + m*(t^3 − 2t^2 + t)→v0 + n*(t^3 − t^2)→v1 <br>
+
+  And applied to our data: <br>
+
+  100 + 12.5m + 200 -12.5n = 300 <br>
+
+  100 + 12.5m + 150 + 0n = 300 <br>
+
+  And thanks to the 2nd formula we can know that m = 4, and so is n. <br>
+
+  So the corresponding tangent vectors are: <br>
+  v0' = v0 * m = 4*(100,100) = (400,400) <br>
+  v1' = v1 * n = 4*(100,0) = (400,0) <br>
+
+  <h1>  
+    4.2
+    <h1>
+    The tangent vector is determinated by the vector (Pi-1 Pi+1) at each point Pi.
+<script type="text/javascript">
+
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, context1, points, vectors, myTransformation, style, drag = null, draggedPoint;
+    var p = false;
+
+    points = [{ x:300, y:300 },{ x:200, y:200 },{ x:400, y:300 },{ x:500, y:300 }];
+    vectors = [{ x:points[0].x - points[1].x, y: points[0].y - points[1].y }, { x:points[2].x - points[3].x, y: points[2].y - points[3].y }];
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+        style2 = {
+            curve:  { width: 3, color: "green" },
+            line:   { width: 1, color: "blue" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        // event handlers (only canvas1)
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+
+        drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(0, 0, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+        // Curve through points and vertices
+        drawCurve(context1, style, points, vectors); // Draw curve
+        drawVertices(context1, style, points); // Draw vertices as circles
+
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        for (var x = 0; x <= bw; x += delta) {
+            myContext.moveTo(x, 0);
+            myContext.lineTo(x, bh);
+        }
+
+        for (var y = 0; y <= bh; y += delta) {
+            myContext.moveTo(0, y);
+            myContext.lineTo(bw , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+
+        myContext.fillStyle = "black";
+        myContext.font = "12px Arial";
+        myContext.fillText("(0,0)",2,12);
+
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, vectors, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+
+        ctx.lineWidth = style2.curve.width;
+        ctx.strokeStyle = style2.curve.color;
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        ctx.lineTo(points[1].x, points[1].y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(points[2].x, points[2].y);
+        ctx.lineTo(points[3].x, points[3].y);
+        ctx.stroke();
+
+        // Draw curve
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+        var currentPoint;
+
+        //for (var i = points[1].x; i < points[2].x; i=i+0.1) {
+            for (var t=0.0; t<1.05; t+=0.05) {
+            var t2 = t*t;
+            var t3 = t2*t;
+            var _2t3 = 2.0*t3;
+            var _3t2 = 3.0*t2;
+            var a = _2t3 - _3t2 + 1.0;
+            var b = -_2t3 + _3t2;
+            var c = t3 - 2.0*t2 + t;
+            var d = t3 - t2;
+            var x = (points[1].x*a) + ((points[2].x*b) + ((vectors[0].x*c) + (vectors[1].x*d)));
+            var y = (points[1].y*a) + ((points[2].y*b) + ((vectors[0].y*c) + (vectors[1].y*d)));
+
+            currentPoint =  {x:x, y:y};
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+
+        vectors = [{ x:points[0].x - points[1].x, y: points[0].y - points[1].y }, { x:points[2].x - points[3].x, y: points[2].y - points[3].y }];
+
+    }
+        ctx.stroke();
+    //}
+}
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    /**
+     Methods to allow dragging transformedPoints around
+     **/
+
+    // start dragging
+    function dragStart(e) {
+        e = mousePos(e);
+        var dx, dy;
+        for (var i=0; i<points.length;i++) {
+            dx = points[i].x - e.x;
+            dy = points[i].y - e.y;
+            if ((dx * dx) + (dy * dy) < style.point.radius * style.point.radius) {
+                drag = i;
+                draggedPoint = e;
+                canvas1.style.cursor = "move";
+                return;
+            }
+        }
+    }
+
+    // dragging
+    function dragging(e) {
+        if (drag!=null) {
+            e = mousePos(e);
+            points[drag].x += e.x - draggedPoint.x;
+            points[drag].y += e.y - draggedPoint.y;
+            draggedPoint = e;
+            drawCanvas();
+        }
+    }
+
+    // end dragging
+    function dragEnd(e) {
+        drag = null;
+        canvas1.style.cursor = "default";
+        drawCanvas();
+    }
+
+    // event parser
+    function mousePos(event) {
+        event = (event ? event : window.event);
+        return {
+            x: event.pageX - canvas1.offsetLeft,
+            y: event.pageY - canvas1.offsetTop
+        }
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    function ComputeAtT() {
+        var i = T.value;
+        var k = i*1;
+        var t2 = k*k;
+        var t3 = t2*k;
+        var _2t3 = 2.0*t3;
+        var _3t2 = 3.0*t2;
+        var a = _2t3 - _3t2 + 1.0;
+        var b =-_2t3 + _3t2;
+        var c = t3-2.0*t2 + k;
+        var d = k*k*k-k*k;
+        var x = (points[1].x*a) + ((points[2].x*b) + ((vectors[0].x*c) + (vectors[1].x*d)));
+        var y = (points[1].y*a) + ((points[2].y*b) + ((vectors[0].y*c) + (vectors[1].y*d)));
+        window.alert("The position of the curve at t = " +i+ " is: x="+x+", y="+ y);
+        }
+
+
+</script>
+</body>
+</html>

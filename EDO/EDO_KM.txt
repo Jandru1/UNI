@@ -1,0 +1,17 @@
+88Tipos de conocimiento:
+
+Empezando con el conocimiento tácito encontramos la colaboración con empleados expertos. Después, en el conocimiento explícito, estarian las FAqs y los manuales mencionados, los códigos necesarios y las normas y procedimientos, entre las que encontramos, por ejemplo, mirar antes las FAQs antes de preguntar a otro empleado, o si alguien quiere hacer algun cambio, en un codigo por ejemplo, subirlo al repositorio correspondiente. En el conocimineto corporativo clasificaríamos el foro ya tambien mencionado además de las BBDD que permiten el acceso desde todas las oficinas. Y por último, en el conocimiento individual, encontraríamos los cursos de aprendizaje individual.
+
+Confluence -> Es un espacio de trabajo en equipo. Ayuda a tu equipo a estructurar, organizar y compartir el trabajo, de forma que todos los miembros tengan la visibilidad del conocimiento institucional y acceso a la información que necesitan para hacer el trabajo lo mejor posible.
+
+Creately -> Creately es un programa para crear diagramas de flujo diseñado para colaborar en equipo. Soporta más de 40 tipos de diagramas y tiene miles de plantillas dibujadas por profesionales.
+
+Bitbucket -> Herramienta de alojamiento de código basado en web concebida para unir a todo el equipo de software con el fin de poner en práctica un proyecto
+
+Teams -> plataforma unificada de comunicación y colaboración que combina chat persistente en el lugar de trabajo, reuniones de video, almacenamiento de archivos e integración de aplicaciones.
+
+Viva-> Servicio nuevo de Microsoft integrado en Teams. Entre sus funcionalidades esta el Viva Learning y el Viva Topics, que ofrecen cursos a los empleados sobre sus temas de interés (el jefe tbn te puede mandar a aprenderte x cosas) e información sobre x temas, con expertos sobre estos que te pueden ayudar.
+
+SAP Data Warehouse Cloud -> Unifica datos y analíticas en una solución en la nube que incluye integración de datos, base de datos, almacén de datos y capacidades analíticas para ayudarlo a liberar la empresa basada en datos.
+
+SAP Data Warehouse Cloud ofrece la flexibilidad para conectar las herramientas ETL de su elección. La solución también proporciona capacidades de virtualización e integración de datos nativas, lo que permite a los usuarios integrar herramientas y diferentes fuentes de datos. ... Los usuarios empresariales pueden modelar y explorar datos fácilmente con modelos de datos prediseñados.

@@ -1,0 +1,24 @@
+CHULETA DSI
+
+Diapo 1:
+es un enfoque para el desarrollo de software con necesidades complejas mediante una profunda conexión entre la implementación y los conceptos del modelo y núcleo del negocio
+
+provee una estructura de prácticas y terminologías para tomar decisiones de diseño que enfoquen y aceleren el manejo de dominios complejos en los proyectos de software.
+
+Debemos adaptar lo máximo posible nuestro modelo a la realidad. Para que sea efectivo debe ....
+
+Para ello hay que tener claro el Modelo de Dominio, definido mediante reuniones entre los miembros del equipo, incluido los expertos en el dominio.
+
+Diapo 2:
+
+1. Presentación. Es donde se presenta la información y hay una interacción con el
+usuario.
+2. Aplicación. Se encarga de crear servicios para interactuar con el dominio. No tiene
+conocimiento del modelado ni tiene reglas de negocio.
+3. Dominio. Donde se encuentra el dominio y las reglas de negocio.
+4. Infraestructura. Provee todo lo necesario para dar una solución tecnológica a nuestro
+sistema.
+
+
+
+14112439

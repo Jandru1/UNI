@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 1</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src="math.min.js"></script>
+</head>
+
+<body>
+
+<h1>DCS - 1. Affine transformations</h1>
+
+<canvas id="canvas1" height="600" width="400" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<canvas id="canvas2" height="600" width="800" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<br>
+<button type="button" onclick="doReset()">Reset</button>
+
+<!-- New stuff :) -->
+<div style="margin-top: 10px;">
+    <p> <strong> PROBLEMA 1 </strong></p>    <p>  </p>
+    <p> Translation </p>
+    <input type="text" id="addX" placeholder="X"></input>
+    <input type="text" id="addY" placeholder="Y"></input>
+    <button type="button" onclick="doTranslation()">Transalte</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p> Rotation around the origin </p> Angle:
+    <input type="text" id="angle"> º </input>
+    <button type="button" onclick="doRotation()">Rotate</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p> Scaling by (1; 2) with respect to the origin. </p>
+    <input type="text" id="lambda1" placeholder= "Lambda 1"></input>
+    <input type="text" id="lambda2" placeholder="Lambda 2"></input>
+    <button type="button" onclick="doScaling()">Scale</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p> Reflection with respect to the x-axis. </p>
+    <button type="button" onclick="doReflection()">Reflect</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p> <strong> PROBLEMA 2 </strong></p>    <p> </p>
+    <button type="button" onclick="doTandR()">Translation and Rotation</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <button type="button" onclick="doRandT()">Rotation and Translation</button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p> Reflection with respect to a given line </p>
+    Y =
+    <input type="text" id="m">X + </input>
+    <input type="text" id="b"></input>
+    <button type="button" onclick="doNewReflection()"> Reflect </button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p> <strong> PROBLEMA 3 </strong></p>
+    <p>  </p>
+    <p> Parallel projection </p>
+    <!--<p> Give value X = 1 if you want to do the parallel projection over </p> -->
+    <input type="text" id="u1" placeholder="u1"></input>
+    <input type="text" id="u2"placeholder="u2"></input>
+    <button type="button" onclick="doParallelProjection()"> Project </button>
+</div>
+
+
+<div style="margin-top: 10px;">
+    <p> Central projection </p>
+    <!--<p> Give value X = 1 if you want to do the parallel projection over </p> -->
+    <input type="text" id="p1" placeholder="X"></input>
+    <input type="text" id="p2"placeholder="Y"></input>
+    <button type="button" onclick="doCentralProjection()"> Project </button>
+</div>
+
+<div style="margin-top: 10px;">
+    <p><strong> PROBLEMA 4 </strong></p>
+    <p> Determine which of the projections implemented in Problem 3 preserve affine combinations. Illustrate that in your program. For example, by showing the same point in
+        the original and projected space, and showing the corresponding coordinates. </p>
+    In order to follow correctly the chosen vertices, I have added them different colours and deduce, then, that Parallel projection preserves affine combinations.
+    <br />
+
+</div>
+
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, canvas2, context1, context2, points, myTransformation, style, drag = null, draggedPoint;
+
+    points = [{ x:-150, y:-200 },{ x:-150, y:-150 },{ x:-50, y:-150 }, { x:-50, y:200 }, { x:0, y:200 },
+        { x:0, y:-150 },{ x:100, y:-150 },{ x:100, y:-250 },{ x:-100, y:-250 },{ x:-150, y:-200 }];
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        /*style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }*/
+
+        var colors = ["#ff80b3", "#99b3ff", "#99ffcc", "#ffff99", "#ad33ff",
+                      "#b3003b", "#d2a679", "#003366", "#ffcc99", "#ebebe0"];
+        style = [];
+
+        for(var i = 0; i < points.length; ++i){
+            style[i] = { curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: colors[i], fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI } }
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        context2.lineCap = "round";
+        context2.lineJoin = "round";
+
+        // Translate origin to center of canvas
+        context1.translate(canvas1.width/2,canvas1.height/2);
+        context2.translate(canvas2.width/2,canvas2.height/2);
+
+        // event handlers (only canvas1)
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+
+        drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+   /* function drawCanvas() {
+        // Clear everything
+        context1.clearRect(-canvas1.width/2, -canvas1.height/2, canvas1.width, canvas1.height);  // Clear canvas
+        context2.clearRect(-canvas2.width/2, -canvas2.height/2, canvas2.width, canvas2.height);  // Clear canvas
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+        drawGrid(context2,canvas2.width, canvas2.height); // Draw background grid
+        // Original points and vertices
+        drawCurve(context1, style, points); // Draw curve
+        drawVertices(context1, style, points); // Draw vertices as circles
+        // Transformed points
+        drawCurve(context2, style, points, myTransformation); // Draw curve transformed
+    }*/
+
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(-canvas1.width/2, -canvas1.height/2, canvas1.width, canvas1.height);  // Clear canvas
+        context2.clearRect(-canvas2.width/2, -canvas2.height/2, canvas2.width, canvas2.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+        drawGrid(context2,canvas2.width, canvas2.height); // Draw background grid
+
+        var newPoints = []
+
+        for (var i = 0; i < points.length; i++)
+            newPoints[i] =  myTransformation(points[i]);
+
+        // Original points and vertices
+        drawCurve(context1, style, points); // Draw curve
+        drawVertices(context1, style, points); // Draw vertices as circles
+
+        // Transformed points
+        drawCurve(context2, style, points, myTransformation); // Draw curve transformed
+        drawVertices(context2, style, newPoints); // Draw vertices as circles
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        var half_width = bw/2;
+        var half_height = bh/2;
+        for (var x = -half_width; x <= half_width; x += delta) {
+            myContext.moveTo(x, -half_height);
+            myContext.lineTo(x, half_height);
+        }
+
+        for (var y = -half_height; y <= half_height; y += delta) {
+            myContext.moveTo(-half_width, y);
+            myContext.lineTo(half_width , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+
+        myContext.fillStyle = "black";
+        myContext.font = "12px Arial";
+        myContext.fillText("(0,0)",2,12);
+
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        // Draw curve
+        ctx.lineWidth = style[0].curve.width;
+        ctx.strokeStyle = style[0].curve.color;
+        ctx.beginPath();
+        var firstPoint = transformation(points[0]);
+        var currentPoint;
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+        for (var i = 0; i < points.length; i++) {
+            currentPoint =  transformation(points[i]);
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+        }
+        ctx.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style[i].point.width;
+            ctx.strokeStyle = style[i].point.color;
+            ctx.fillStyle = style[i].point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style[i].point.radius, style[i].point.arc1, style[i].point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+
+    /**
+     Methods to allow dragging transformedPoints around
+     **/
+
+    // start dragging
+    function dragStart(e) {
+        e = mousePos(e);
+        // Reverse translation to canvas1
+        var pos = fromCanvasToPointSpace(e);
+        var dx, dy;
+        for (var i=0; i<points.length;i++) {
+            dx = points[i].x - pos.x;
+            dy = points[i].y - pos.y;
+            if ((dx * dx) + (dy * dy) < style[0].point.radius * style[0].point.radius) {
+                drag = i;
+                draggedPoint = pos;
+                canvas1.style.cursor = "move";
+                return;
+            }
+        }
+    }
+
+    // dragging
+    function dragging(e) {
+        if (drag!=null) {
+            e = mousePos(e);
+            // Reverse translation to canvas1
+            var pos = fromCanvasToPointSpace(e);
+            points[drag].x += pos.x - draggedPoint.x;
+            points[drag].y += pos.y - draggedPoint.y;
+            draggedPoint = pos;
+            drawCanvas();
+        }
+    }
+
+    // end dragging
+    function dragEnd(e) {
+        drag = null;
+        canvas1.style.cursor = "default";
+        drawCanvas();
+    }
+
+    // event parser
+    function mousePos(event) {
+        event = (event ? event : window.event);
+        return {
+            x: event.pageX - canvas1.offsetLeft,
+            y: event.pageY - canvas1.offsetTop
+        }
+    }
+
+    // Transforms the coordinates of a point in canvas1 to one in the space of points
+    function fromCanvasToPointSpace(canvasPoint) {
+        return {x: canvasPoint.x - canvas1.width/2 , y: canvasPoint.y - canvas1.height/2};
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+    canvas2 = document.getElementById("canvas2");
+    context2 = canvas2.getContext("2d");
+
+    init();
+
+    /**
+     * Auxiliary functions
+     */
+
+
+
+    function doReset () {
+        myTransformation = function(p){return p}; //Identity transform
+        drawCanvas();
+    }
+
+    // **************************************************************
+    // ************************ PROBLEM 1 ***************************
+    // **************************************************************
+
+    var scalingFunction = function (point) {
+        var lambda1 = document.getElementById("lambda1").value;
+        var lambda2 = document.getElementById("lambda2").value;
+        var matrix = math.matrix([[lambda1, 0], [0, lambda2]]); //2x2 scaling matrix (for 0.5)
+        var pointAsArray = [point.x, point.y];
+        var result = math.multiply(matrix,pointAsArray); // result is a matrix!
+        var transformedPoint = {x: result.get([0]),y: result.get([1])};
+        return transformedPoint;
+    }
+
+    // This is just an example
+    function doScaling() {
+        myTransformation = scalingFunction;
+        drawCanvas();
+    }
+
+
+    var translationFunction = function(point){
+        var addX = document.getElementById("addX").value;
+        var addY = document.getElementById("addY").value;
+        var pointAsArray = [point.x, point.y, 1];
+        var matrix = math.matrix([[1, 0, addX], [0, 1, addY]]);
+        var result = math.multiply(matrix,pointAsArray); // result is a matrix!
+        var transformedPoint = {x: result.get([0]),y: result.get([1])};
+        return transformedPoint;
+    }
+
+    function doTranslation(){
+        myTransformation = translationFunction;
+        drawCanvas();
+    }
+
+    var rotationFunction = function(point){
+        var angle = document.getElementById("angle").value;
+        angle = angle*math.pi/180.0;
+        var matrix = math.matrix([[math.cos(angle), -math.sin(angle)],
+                                  [math.sin(angle), math.cos(angle)]]);
+        var pointAsArray = [point.x, point.y];
+        var result = math.multiply(matrix,pointAsArray); // result is a matrix!
+        var transformedPoint = {x: result.get([0]),y: result.get([1])};
+        return transformedPoint;
+    }
+
+    function doRotation(){
+        myTransformation = rotationFunction;
+        drawCanvas();
+    }
+
+    var reflectionFunction = function(point){
+        return {x: point.x, y: -point.y};
+    }
+
+    function doReflection(){
+        myTransformation = reflectionFunction;
+        drawCanvas();
+    }
+
+
+    // **************************************************************
+    // ************************ PROBLEM 2 ***************************
+    // **************************************************************
+
+    var TandRFunction = function(point){
+
+        var addX = document.getElementById("addX").value;
+        var addY = document.getElementById("addY").value;
+        var pointAsArray = [point.x, point.y, 1];
+        var matrix = math.matrix([[1, 0, addX], [0, 1, addY]]);
+        var result = math.multiply(matrix,pointAsArray); // result is a matrix!
+        var transformedPoint = {x: result.get([0]),y: result.get([1])};
+
+
+        var angle = document.getElementById("angle").value;
+        angle = angle*math.pi/180.0;
+        var matrix = math.matrix([[math.cos(angle), -math.sin(angle)],
+                                  [math.sin(angle), math.cos(angle)]]);
+        var pointAsArray = [transformedPoint.x, transformedPoint.y];
+        var result = math.multiply(matrix, pointAsArray); // result is a matrix!
+        var newTransformedPoint = {x: result.get([0]),y: result.get([1])};
+        return newTransformedPoint;
+
+
+    }
+
+    function doTandR(){
+        myTransformation = TandRFunction;
+        drawCanvas();
+    }
+
+
+    var RandTFunction = function(point){
+        var angle = document.getElementById("angle").value;
+        angle = angle*math.pi/180.0;
+        var matrix = math.matrix([[math.cos(angle), -math.sin(angle)],
+                                  [math.sin(angle), math.cos(angle)]]);
+        var pointAsArray = [point.x, point.y];
+        var result = math.multiply(matrix,pointAsArray); // result is a matrix!
+        var transformedPoint = {x: result.get([0]),y: result.get([1])};
+
+        var addX = document.getElementById("addX").value;
+        var addY = document.getElementById("addY").value;
+        var pointAsArray = [transformedPoint.x, transformedPoint.y, 1];
+        var matrix = math.matrix([[1, 0, addX], [0, 1, addY]]);
+        var result = math.multiply(matrix, pointAsArray); // result is a matrix!
+        var newTransformedPoint = {x: result.get([0]),y: result.get([1])};
+        return newTransformedPoint;
+
+    }
+
+    function doRandT(){
+        myTransformation = RandTFunction;
+        drawCanvas();
+    }
+
+    var newReflectionFunction = function(point){
+	// y = mx + b
+        var m = document.getElementById("m").value;
+	var b = document.getElementById("b").value;
+
+        var pointsAsArray = [point.x, point.y, 1];
+        var matrix = math.matrix([[-(m*m - 1)/(m*m + 1),   2*m/(m*m + 1),         -2*m*b/(m*m + 1)],
+                                          [2*m/(m*m + 1),          (m*m - 1)/(m*m + 1),    2*b/(m*m + 1)],
+                                          [0,                      0,                     1]]);
+        var result = math.multiply(matrix, pointsAsArray);
+        var newTransformedPoint = {x: result.get([0]), y: result.get([1])};
+        return newTransformedPoint;
+    }
+
+
+    function doNewReflection(){
+        myTransformation = newReflectionFunction;
+        drawCanvas();
+    }
+
+
+	// **************************************************************
+    // ************************ PROBLEM 3 ***************************
+    // **************************************************************
+
+	// Y = 0
+	var parallelProjectionY = function(point){
+		var pointsAsArray = [point.x, point.y];
+		var u1 = document.getElementById("u1").value;
+		var u2 = document.getElementById("u2").value;
+
+		var matrix = math.matrix([[1, -u1/u2],
+								  [0, 0]]);
+		var result = math.multiply(matrix, pointsAsArray);
+		var newTransformedPoint = {x: result.get([0]), y: result.get([1])};
+		return newTransformedPoint;
+	}
+
+	var parallelProjectionX = function(point){
+		var pointsAsArray = [point.x, point.y];
+		var u1 = document.getElementById("u1").value;
+		var u2 = document.getElementById("u2").value;
+
+		var matrix = math.matrix([[0, 0],
+								  [-u2/u1, 1]]);
+		var result = math.multiply(matrix, pointsAsArray);
+		var newTransformedPoint = {x: result.get([0]), y: result.get([1])};
+		return newTransformedPoint;
+	}
+
+	function doParallelProjection(){
+		myTransformation = parallelProjectionY;
+		drawCanvas();
+	}
+
+	var centralProjection = function(point){
+		var p1 = document.getElementById("p1").value;
+		var p2 = document.getElementById("p2").value;
+
+		var newValue = (p1*point.y)/(-p2 + point.y) + (1 - (point.y/(-p2 + point.y)))*point.x;
+		var newTransformedPoint = {x: newValue, y: 0};
+		return newTransformedPoint;
+	}
+
+	function doCentralProjection() {
+        myTransformation = centralProjection;
+        drawCanvas();
+	}
+
+
+</script>
+</body>
+</html>

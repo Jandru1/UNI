@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 4.1</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src="math.min.js"></script>
+</head>
+
+<body>
+
+<h1>DCS - 4.1.Bézier Curves</h1>
+
+<canvas id="canvas1" height="600" width="800" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<h1>
+<button type="button" onclick="Add3Points()"><h3>Add points</h3></button><br>
+<h3><input id="N"> Number of Points</input>
+<button  type="button" onClick= "BezierWithPoints()"> Add!</button></h3>
+<br>
+Load control points: <input type="file" id="file-input"/>
+<br>
+Save control points: <button type="button" onclick="doSave()">Save</button>
+
+
+
+
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, context1, points, endPoint, myTransformation, style, drag = null, draggedPoint,vecIndex = [];
+
+
+
+  	var letter = 'A'; // Your letter goes here
+
+      points = [{x:168,y:546},{x:277,y:290},{x:365,y:82},{x:373,y:66},{x:381,y:50},{x:384,y:55},{x:389,y:55},{x:394,y:55},{x:555,y:444},{x:589,y:519},{x:623,y:594},{x:664,y:588},{x:664,y:586},{x:664,y:584},{x:664,y:589},{x:665,y:598},{x:666,y:607},{x:461,y:607},{x:460,y:602},{x:459,y:597},{x:462,y:600},{x:460,y:588},{x:458,y:576},{x:566,y:611},{x:519,y:522},{x:472,y:433},{x:469,y:428},{x:468,y:421},{x:467,y:414},{x:265,y:418},{x:261,y:418},{x:257,y:418},{x:208,y:549},{x:208,y:548},{x:208,y:547},{x:227,y:578},{x:249,y:578},{x:271,y:578},{x:274,y:586},{x:275,y:602},{x:276,y:618},{x:104,y:597},{x:115,y:601},{x:126,y:605},{x:115,y:586},{x:116,y:579},{x:117,y:572},{x:147,y:583},{x:169,y:549}];
+
+      var numP = points.length;
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        curvestyle = {
+            curve:  { width: 6, color: "green" },
+            line:   { width: 1, color: "green" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        // event handlers (only canvas1)
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+
+        drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(0, 0, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+        // Background letter
+        context1.fillStyle = "lightgray";
+            context1.font = "800px Times";
+            context1.fillText(letter,100,600);
+
+
+        // Curve through points and vertices
+        drawCurve(context1, style, points); // Draw curve
+        drawVertices(context1, style, points); // Draw vertices as circles
+
+        for(var i = 0; i < vecIndex.length; ++i){
+            drawCurve(context1, style, points.slice(vecIndex[i][0], vecIndex[i].length + vecIndex[i][0]));
+            drawVertices(context1, style, points.slice(vecIndex[i][0], vecIndex[i].length + vecIndex[i][0]));
+            calcBezierCurve(points.slice(vecIndex[i][0], vecIndex[i].length + vecIndex[i][0]));
+        }
+
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        for (var x = 0; x <= bw; x += delta) {
+            myContext.moveTo(x, 0);
+            myContext.lineTo(x, bh);
+        }
+
+        for (var y = 0; y <= bh; y += delta) {
+            myContext.moveTo(0, y);
+            myContext.lineTo(bw , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+
+        myContext.fillStyle = "black";
+        myContext.font = "12px Arial";
+        myContext.fillText("(0,0)",2,12);
+
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        ctx.lineWidth = curvestyle.curve.width;
+        ctx.strokeStyle = curvestyle.curve.color;
+        ctx.beginPath();
+        for (var j = 0; j < numP-1; ++j) {
+            ctx.moveTo(points[j].x, points[j].y);
+            ctx.lineTo(points[j+1].x, points[j+1].y);
+            ctx.stroke();
+        }
+
+        if (numP > 4) {
+        	for (var p = 0; p < numP-4; p+=3) {
+        	points[p+4].x = (points[p+3].x - (points[p+2].x)/2)*2;
+        	points[p+4].y = (points[p+3].y - (points[p+2].y)/2)*2;
+        	}
+   		}
+
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+
+        for (var j = 0; j < numP-1; j+=3) {
+
+	        for (var t=0.0; t<1.005; t+=0.005) {
+	            var t2 = t*t;
+	            var t3 = t2*t;
+	            var a = -t3 + 3.0*t2 - 3.0*t + 1.0;
+	            var b = 3.0*t3 - 6.0*t2 + 3.0*t;
+	            var c = -3.0*t3 + 3.0*t2;
+	            var d = t3;
+		        var x = (points[j].x*a) + ((points[j+1].x*b) + ((points[j+2].x*c) + (points[j+3].x*d)));
+		        var y = (points[j].y*a) + ((points[j+1].y*b) + ((points[j+2].y*c) + (points[j+3].y*d)));
+		        ctx.lineTo(x, y);
+		        ctx.moveTo(x, y);
+		    }
+            ctx.stroke();
+        }
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+    /**
+     Methods to allow dragging transformedPoints around
+     **/
+
+    // start dragging
+    function dragStart(e) {
+        e = mousePos(e);
+        var dx, dy;
+        for (var i=0; i<points.length;i++) {
+            dx = points[i].x - e.x;
+            dy = points[i].y - e.y;
+            if ((dx * dx) + (dy * dy) < style.point.radius * style.point.radius) {
+                drag = i;
+                draggedPoint = e;
+                canvas1.style.cursor = "move";
+                return;
+            }
+        }
+    }
+
+    // dragging
+    function dragging(e) {
+        if (drag!=null) {
+            e = mousePos(e);
+            points[drag].x += e.x - draggedPoint.x;
+            points[drag].y += e.y - draggedPoint.y;
+            draggedPoint = e;
+            drawCanvas();
+        }
+    }
+
+    // end dragging
+    function dragEnd(e) {
+        drag = null;
+        canvas1.style.cursor = "default";
+        drawCanvas();
+    }
+
+    // event parser
+    function mousePos(event) {
+        event = (event ? event : window.event);
+        return {
+            x: event.pageX - canvas1.offsetLeft,
+            y: event.pageY - canvas1.offsetTop
+        }
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    function Add3Points() {
+        var u = 1;
+        numP +=3;
+        for (var i=1;i<=3 ;i++) {
+        	if (i == 1) points.push({x: (points[numP-4].x - (points[numP-5].x)/2)*2, y:(points[numP-4].y - (points[numP-5].y)/2)*2 });
+
+            else points.push({x:u*50,y:50*u});
+            ++u;
+        }
+        drawCanvas();
+    }
+
+    function factorial(n){
+            if (n <= 1) return 1;
+            else return n* factorial(n - 1);
+         }
+
+     function binomial(n, i){
+        var factN = factorial(n);
+        var factI = factorial(i);
+        var factNI = factorial(n - i);
+        return factN / (factI * factNI);
+     }
+
+     function BezierWithPoints(cpoints){
+       var num = document.getElementById("N").value;
+       var pX, pY, point, index = [];
+       var size = points.length;
+
+       for(var i = 0; i < num; ++i){
+           pX = Math.floor((Math.random() * 799) + 1);
+           pY = Math.floor((Math.random() * 599) + 1);
+           point = {x: pX, y: pY};
+           points.push(point);
+           index.push(size + i);
+       }
+
+       vecIndex.push(index);
+       drawCanvas2();
+     }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    /**
+     * Auxiliary functions for file handling
+     */
+  function saveToFile(text, name, type) {
+      var a = document.createElement("a");
+      var file = new Blob([text], {type: type});
+      a.href = URL.createObjectURL(file);
+      a.download = name;
+      a.click();
+    }
+
+
+  function doSave() {
+    //Save control points as JSON string to a file
+    saveToFile(JSON.stringify(points), 'control_points.txt', 'text/plain');
+    }
+
+  function readSingleFile(e) {
+    var file = e.target.files[0];
+    if (!file) {
+    return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+    var contents = e.target.result;
+    updateContents(contents);
+    };
+    reader.readAsText(file);
+  }
+
+  function updateContents(contents) {
+    // Replace control points by object read from file
+    points = JSON.parse(contents);
+    // Redraw
+    drawCanvas();
+  }
+
+  document.getElementById('file-input')
+    .addEventListener('change', readSingleFile, false);
+
+
+    init();
+
+
+</script>
+</body>
+</html>

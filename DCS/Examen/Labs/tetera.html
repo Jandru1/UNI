@@ -1,0 +1,260 @@
+<html>
+     <head>
+     <title>DCS - 5</title>
+
+     </head>
+
+     <body>
+
+     <h1>DCS - Lab 5 - Surfaces</h1>
+
+     <script src="math.min.js"></script>
+   <script src="three.min.js"></script>
+   <script src="OrbitControlsDCS.js"></script>
+
+    <script type="text/javascript">
+       /**
+       * Partially based on code by Ikaros Kappler from http://int2byte.de/public/blog.20160129_Three.js_Basic_Scene_Setup/
+       **/
+       var P = [
+       [{ x:-1.5, y:2, z:0 }, { x:-1.3, y:0, z:0 },{ x:1.3, y:0, z:0 },{ x:1.5, y:2, z:0 }],
+       [{ x:-1.5, y:2, z:2 }, { x:-1.3, y:0, z:2 },{ x:1.3, y:0, z:2 },{ x:1.5, y:2, z:2 }],
+       [{ x:-1.5, y:2, z:4 }, { x:-1.3, y:0, z:4 },{ x:1.3, y:0, z:4 },{ x:1.5, y:2, z:4 }],
+       [{ x:-1.5, y:2, z:6 }, { x:-1.3, y:0, z:6 },{ x:1.3, y:0, z:6 },{ x:1.5, y:2, z:6 }]
+       ];
+
+       var Q = [
+       [{ x:-3, y:3, z:11 }, { x:-2, y:-1, z:11 },{ x:2, y:-1, z:11 },{ x:3, y:3, z:11 }],
+       [{ x:-3, y:3, z:13 }, { x:-2, y:-1, z:13 },{ x:2, y:-1, z:13 },{ x:3, y:3, z:13 }],
+       [{ x:-3, y:3, z:15 }, { x:-2, y:-1, z:15 },{ x:2, y:-1, z:15 },{ x:3, y:3, z:15 }],
+       [{ x:-3, y:3, z:17 }, { x:-2, y:-1, z:17 },{ x:2, y:-1, z:17 },{ x:3, y:3, z:17 }]
+       ];
+
+       var C = [
+       [{ x:-1.5, y:2, z:6 }, { x:-1.3, y:0, z:6 },{ x:1.3, y:0, z:6 },{ x:1.5, y:2, z:6 }],
+       [{ x:-2, y:2.33, z:7.66 }, { x:-1.53, y:-0.33, z:7.66 },{ x:1.53, y:-1, z:7.66 },{ x:2, y:2.33, z:7.66 }],
+       [{ x:-2.5, y:2.66, z:9.33 }, { x:-1.76, y:-0.66, z:9.33 },{ x:1.76, y:-1, z:9.33 },{ x:2.5, y:2.66, z:9.33 }],
+       [{ x:-3, y:3, z:11 }, { x:-2, y:-1, z:11 },{ x:2, y:-1, z:11 },{ x:3, y:3, z:11 }],
+       ];
+
+   var windowWidth=800.0, windowHeight=600.0;
+
+       // Create a scene
+       this.scene = new THREE.Scene();
+
+       // Create a camera
+   // Parameters: vertical field of view, aspect ratio, near-clipping plane, far-clipping plane
+   var camera = new THREE.PerspectiveCamera(45, windowWidth / windowHeight, 0.1, 1000);
+
+       // Create a THREE renderer
+       this.renderer = new THREE.WebGLRenderer( { antialias : true, alpha:true } );
+       this.shadowMapEnabled = true;
+       this.renderer.setSize(windowWidth, windowHeight);
+       document.body.appendChild(renderer.domElement); // append it to the DOM
+
+       // position and point the camera to the center of the scene (0,0,0)
+       camera.position.x = 50;
+       camera.position.y = 60;
+       camera.position.z = 50;
+       camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+   // Create light, with same position and direction as camera
+       this.spotLight = new THREE.SpotLight(0xffffff);
+   this.spotLight.position.copy(camera.position)
+   this.spotLight.target.position.copy (camera.lookAt);
+       scene.add(spotLight);
+
+
+   /**** Here is where the important stuff is: definition of parametric geometry ****/
+   // Examples of three parametric surface functions
+
+   // Note: the parametric functions will be evaluated only on [0,1] x [0,1]
+   // The function is called like this:
+   // for v=0 to 1 step ...
+   //    for u=0 to 1  step...
+   //        call function(u,v)
+
+   binomialCoeff = function (x, k) {
+     var res = x-k;
+     var xnew = 1;
+     var knew = 1;
+     var resnew = 1;
+     for (var i = 1; i <= x; ++i) {
+       xnew *= i;
+     }
+     for (var h = 1; h <= k; ++h) {
+       knew *= h;
+     }
+     for (var l = 1; l <= res; ++l) {
+       resnew *= l;
+     }
+     var r = xnew/(knew*resnew);
+     return r;
+   }
+
+   planeFunction = function(u, v)
+   {
+     var s = this.functionExtent; //stretch value
+     var x = s*v;
+     var y = (s)-x;
+     var z = s*u;
+
+     return new THREE.Vector3(x, y, z);
+
+   };
+
+   bezierSurfaceP = function (u, v) {
+     var a=2;
+     var b=2;
+     var c=2;
+     u = u * 2*Math.PI; // scale u to [0, 2PI]
+     if (v)
+     v = v * Math.PI/2; // scale v to [0, PI]
+           var x = a*Math.cos(u)*Math.sin(v);
+     var z = b*Math.sin(u)*Math.sin(v);
+           var y = c*Math.cos(v);
+           return new THREE.Vector3(x, y+4.5, z);
+    }
+
+   connector = function (u, v) {
+           var s = this.functionExtent; //stretch value
+           var n = 3;
+           var m = 3;
+           var x = 0;
+           var y = 0;
+           var z = 0;
+
+
+           for (var i = 0; i <= m; ++i) {
+             for (var j = 0; j <= n; ++j) {
+               var mi = binomialCoeff(m,i);
+               var nj = binomialCoeff(n,j);
+               x+=mi* Math.pow(u,i) * Math.pow(1-u,m-i) * nj * Math.pow(v,j) * Math.pow(1-v,n-j) * C[i][j].x;
+               y+=mi* Math.pow(u,i) * Math.pow(1-u,m-i) * nj * Math.pow(v,j) * Math.pow(1-v,n-j) * C[i][j].y;
+               z+=mi* Math.pow(u,i) * Math.pow(1-u,m-i) * nj * Math.pow(v,j) * Math.pow(1-v,n-j) * C[i][j].z;
+             }
+           }
+
+           return new THREE.Vector3(x, y, z);
+   }
+   var a = 0
+   bezierSurfaceQ = function (u, v) {
+
+                   var s = this.functionExtent; //stretch value
+                   u = u * 2* Math.PI; // scale u to [0, 2PI]
+                   v = v * Math.PI; // scale v to [0, PI]
+                   var x = Math.cos(u);
+                   var z = Math.sin(u);
+                   var y = v;
+                   a += 0.001
+                   if (a >= 1)  {
+                     return new THREE.Vector3(x*a, y, z*a);
+                   }
+                   else return new THREE.Vector3(x, y, z);
+
+   }
+
+   ellipsoidFunction = function (u, v) {
+     var a=40;
+     var b=20;
+     var c=30;
+     u = u * 2* Math.PI; // scale u to [0, 2PI]
+     v = v * Math.PI; // scale v to [0, PI]
+           var x = a*Math.cos(u)*Math.sin(v);
+     var z = b*Math.sin(u)*Math.sin(v);
+           var y = c*Math.cos(v);
+           return new THREE.Vector3(x, y, z);
+   }
+
+   // Function to create the actual mesh
+       function createMesh(geom) {
+     // Translate geometry to center of scene
+           geom.applyMatrix(new THREE.Matrix4().makeTranslation(-functionExtent/2, 0, -functionExtent/2));
+           // Assign material
+           var meshMaterial = new THREE.MeshLambertMaterial({color:0xff5555, wireframe:false}); // You can disable wireframe
+           meshMaterial.side = THREE.DoubleSide;
+           // create a multimaterial and return it
+           return THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial]);
+       }
+
+   // Create and add parametric surface function (i.e., parametric geometry) to scene
+   this.functionExtent = 60;
+   var slides = functionExtent/3; //Number of evaluations on first variable
+   var stacks = functionExtent/3; //Number of evaluations on second variable
+
+   for (var j = 0; j <= 3; ++j) {
+
+               C[2][j].x = -Q[1][j].x +Q[0][j].x+C[3][j].x;
+               C[2][j].y = -Q[1][j].y +Q[0][j].y+C[3][j].y;
+               C[2][j].z = -Q[1][j].z +Q[0][j].z+C[3][j].z;
+
+               C[1][j].x = C[0][j].x +P[3][j].x-P[2][j].x;
+               C[1][j].y = C[0][j].y +P[3][j].y-P[2][j].y;
+               C[1][j].z = C[0][j].z +P[3][j].z-P[2][j].z;
+               }
+   //var parametricFunction = planeFunction; // Example 1
+   var parametricFunction = bezierSurfaceP;
+   //var parametricFunction = ellipsoidFunction;  // Example 3
+
+   // Create parametric geometry based on parametric function
+   var graphGeometry = new THREE.ParametricGeometry(parametricFunction, slides, stacks);
+
+   // Add it to scene
+   this.scene.add(createMesh(graphGeometry));
+
+
+   var parametricFunction = bezierSurfaceQ;
+
+   var graphGeometry = new THREE.ParametricGeometry(parametricFunction, slides, stacks);
+
+   // Add it to scene
+   this.scene.add(createMesh(graphGeometry));
+
+
+
+
+   /****************************/
+
+   // Auxiliary things
+
+       // Add grid helper
+   var gridExtent=80;
+       var gridHelper = new THREE.GridHelper( gridExtent, gridExtent/10 );
+       gridHelper.colorGrid = 0xE8E8E8;
+       this.scene.add( gridHelper );
+
+       // Add an axis helper
+       var ah = new THREE.AxisHelper(50);
+       ah.position.y -= 0.1;  // The axis helper should not interfere with the grid helper
+       this.scene.add( ah );
+
+       // Add an orbit control helper, to navigate scence with mosue
+       var _self = this;
+       this.orbitControls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+       // Always move the point light with the camera. Looks much better ;)
+       this.orbitControls.addEventListener( 'change',
+       function() { _self.spotLight.position.copy(_self.camera.position); }
+       );
+       this.orbitControls.enableDamping = true;
+       this.orbitControls.dampingFactor = 1.0;
+       this.orbitControls.enableZoom    = true;
+       this.orbitControls.target.copy(new THREE.Vector3(0, 0, 0));
+
+       // This is the basic render function. It will be called perpetual, again and again,
+       // depending on your machines possible frame rate.
+       this._render = function () {
+           // Pass the render function itself
+           requestAnimationFrame(this._render);
+           this.renderer.render(this.scene, this.camera);
+       };
+
+       // Call the rendering function. This will cause an infinite recursion
+       this._render();
+
+   </script>
+     <br>
+   Note: X axis is red, Y axis is green, Z axis is blue.
+   Each grid square on the plane Y=0 has size 10x10.
+     </body>
+
+     </html>

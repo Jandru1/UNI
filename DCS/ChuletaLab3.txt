@@ -1,0 +1,16 @@
+Cosas a expxlica DCS Lab 3:
+
+Ejercicio1:
+
+Lagrange : encontrar máximos y mínimos de funciones de múltiples variables.
+
+Cogemos las coordenadas x e y de cada punto y en función de i hacemos el correspondiente cálculo:
+
+x1: (((i-x2)*(i-x3)*(i-x4))/((x1-x2)*(x1-x3)*(x1-x4)))*y1
+
+Ejercicio2:
+
+Runge Phenomenon: due to polinomical interpolation with high gradepolynomials using equidistant nodes.
+
+
+Ejercicio3:

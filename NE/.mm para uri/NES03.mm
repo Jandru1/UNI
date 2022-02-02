@@ -1,0 +1,51 @@
+<map version="1.1.0">
+<!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
+<node CREATED="1568559096001" ID="ID_173219432" MODIFIED="1568560034463" TEXT="Comercio electronico">
+<node CREATED="1568560119405" HGAP="21" ID="ID_1130077685" MODIFIED="1568561502797" POSITION="right" TEXT="Beneficios para el consumidor" VSHIFT="-62">
+<node CREATED="1568560129975" ID="ID_1692866661" MODIFIED="1568560167837" TEXT="Reducci&#xf3;n de asimetr&#xed;a de informaci&#xf3;n">
+<node CREATED="1568560299543" ID="ID_910318269" MODIFIED="1568560393464" TEXT="Mayor conocimiento para la negociaci&#xf3;n"/>
+</node>
+<node CREATED="1568560171092" ID="ID_424243031" MODIFIED="1568560615712" TEXT="Desintermediaci&#xf3;n">
+<node CREATED="1568560285184" ID="ID_120613343" MODIFIED="1568560296258" TEXT="Reducci&#xf3;n del costo final del producto"/>
+</node>
+</node>
+<node CREATED="1568560437963" HGAP="22" ID="ID_1125571636" MODIFIED="1568561787649" POSITION="right" TEXT="Beneficios para el proveedor" VSHIFT="32">
+<node CREATED="1568560476277" ID="ID_1900823588" MODIFIED="1568560539499" TEXT="Mayor flexibilidad en los precios">
+<node CREATED="1568560801180" ID="ID_1066968551" MODIFIED="1568560806853" TEXT="Ajuste din&#xe1;mico"/>
+</node>
+<node CREATED="1568560478835" ID="ID_110526054" MODIFIED="1568560664816" TEXT="Desintermediaci&#xf3;n">
+<node CREATED="1568560666706" ID="ID_1767110033" MODIFIED="1568560677267" TEXT="Reducci&#xf3;n del coste del intermediario"/>
+</node>
+</node>
+<node CREATED="1568560898405" ID="ID_1573492201" MODIFIED="1568560943547" POSITION="left" TEXT="Mercados">
+<node CREATED="1568560945861" HGAP="27" ID="ID_1350092729" MODIFIED="1568561495239" TEXT="Tradicional" VSHIFT="-46">
+<node CREATED="1568560960719" ID="ID_1190307140" MODIFIED="1568560996674" TEXT="Alta asimetr&#xed;a de informaci&#xf3;n; perjudicial para el consumidor"/>
+<node CREATED="1568561049681" ID="ID_1976801011" MODIFIED="1568561060572" TEXT="Intermediaci&#xf3;n"/>
+<node CREATED="1568561169024" ID="ID_1760409482" MODIFIED="1568561177455" TEXT="Dificultad al ajuste de precios"/>
+<node CREATED="1568561242277" ID="ID_303834508" MODIFIED="1568561254672" TEXT="Altos costos de men&#xfa;"/>
+<node CREATED="1568561289345" ID="ID_1104242968" MODIFIED="1568561302292" TEXT="Posible entrega instant&#xe1;nea del producto"/>
+</node>
+<node CREATED="1568560956017" HGAP="24" ID="ID_991896151" MODIFIED="1568561491148" TEXT="Digital" VSHIFT="50">
+<node CREATED="1568561001548" ID="ID_1391727270" MODIFIED="1568561020670" TEXT="Alta asimetr&#xed;a de informaci&#xf3;n; beneficioso para el consumidor"/>
+<node CREATED="1568561063540" ID="ID_1450483019" MODIFIED="1568561089058" TEXT="Posible desintermediaci&#xf3;n"/>
+<node CREATED="1568561150095" ID="ID_592140337" MODIFIED="1568561167611" TEXT="facilidad al ajuste de precios"/>
+<node CREATED="1568561256253" ID="ID_1570272053" MODIFIED="1568561261549" TEXT="Bajos costos de men&#xfa;"/>
+<node CREATED="1568561306265" ID="ID_253950027" MODIFIED="1568561627332" TEXT="Posible retraso en la entrega del producto (no con productos digitales)"/>
+</node>
+</node>
+<node CREATED="1568561397549" HGAP="-63" ID="ID_1248032589" MODIFIED="1568561783846" POSITION="left" TEXT="Internet" VSHIFT="57">
+<node CREATED="1568561412531" HGAP="31" ID="ID_194793489" MODIFIED="1568561645360" TEXT="Producto Digital" VSHIFT="24">
+<node CREATED="1568561522734" ID="ID_1524632017" MODIFIED="1568561697316" TEXT="Coste Marginal nulo"/>
+<node CREATED="1568561566199" ID="ID_1353125659" MODIFIED="1568561571242" TEXT="Alto coste de producci&#xf3;n"/>
+<node CREATED="1568561673608" ID="ID_1777200950" MODIFIED="1568561688439" TEXT="Costo de copia pr&#xe1;cticamente nulo"/>
+<node CREATED="1568561746165" ID="ID_750623758" MODIFIED="1568561768592" TEXT="Ajuste de precios variable"/>
+</node>
+<node CREATED="1568561444956" HGAP="24" ID="ID_1291490599" MODIFIED="1568561631311" TEXT="Producto tradicional" VSHIFT="58">
+<node CREATED="1568561534996" ID="ID_571402220" MODIFIED="1568561709504" TEXT="Coste Marginal superior a 0"/>
+<node CREATED="1568561573297" ID="ID_1911596774" MODIFIED="1568561581632" TEXT="Bajo coste de producci&#xf3;n"/>
+<node CREATED="1568561715147" ID="ID_1948058213" MODIFIED="1568561729412" TEXT="Costo de copia superior a 0"/>
+<node CREATED="1568561771225" ID="ID_1543234071" MODIFIED="1568561775140" TEXT="Ajuste de precios fijo"/>
+</node>
+</node>
+</node>
+</map>

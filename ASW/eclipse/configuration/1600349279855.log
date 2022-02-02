@@ -1,0 +1,33 @@
+!SESSION 2020-09-17 15:27:59.419 -----------------------------------------------
+eclipse.buildId=4.11.0.I20190307-0500
+java.version=1.8.0_241
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_ES
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product
+
+!ENTRY org.eclipse.osgi 4 0 2020-09-17 15:28:01.793
+!MESSAGE Application error
+!STACK 1
+java.lang.UnsatisfiedLinkError: Cannot load 64-bit SWT libraries on 32-bit JVM
+	at org.eclipse.swt.internal.Library.loadLibrary(Library.java:261)
+	at org.eclipse.swt.internal.Library.loadLibrary(Library.java:241)
+	at org.eclipse.swt.internal.C.<clinit>(C.java:19)
+	at org.eclipse.swt.widgets.Display.<clinit>(Display.java:143)
+	at org.eclipse.ui.internal.Workbench.createDisplay(Workbench.java:749)
+	at org.eclipse.ui.PlatformUI.createDisplay(PlatformUI.java:162)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.createDisplay(IDEApplication.java:185)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(IDEApplication.java:128)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(EclipseAppHandle.java:203)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(EclipseAppLauncher.java:137)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(EclipseAppLauncher.java:107)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:400)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:255)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:661)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:597)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1476)
+	at org.eclipse.equinox.launcher.Main.main(Main.java:1449)

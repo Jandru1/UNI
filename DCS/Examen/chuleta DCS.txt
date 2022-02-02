@@ -1,0 +1,107 @@
+parametrizar linea: P1(x1,y1) P2(x2,y2)
+
+u(P1) + (1-u)*P2
+
+parametrizar curva: y = ax^2 + bx + c // transformar a d(t) = (t, algo)
+
+Parametrizar supeficie
+
+s(u, s) = (1-s)*l1(u) + s*l2(u)
+
+supongo que lo mismo con puntos
+
+Ejemplo con espiral:
+
+param espiral 2d = (b0cos0, b0sin0, 0)
+
+a superficie, al unir con un punto (0, 0, -h(altura)):
+
+
+S(0,u) = 
+(1-u)(0,0,-h) + u(b0cos0, b0sin0, 0) para u€[0,1]
+
+al final queda asi:
+
+(u*b0cos0, u*b0sin0, h(u-1)), para 0 € [0,2.1pi] y u € [0,1]
+
+----------------------------------------------------------------------------------
+
+Continuity Bezier:
+
+P0,P1,P2,P3
+Q0,Q1,Q2,Q3
+
+C0: P3 = Q0
+C1: P3 -P2 = Q1 - Q0
+C2: P3 - 2P2 + P1 = Q2 - 2Q1 + Q0
+
+in Formula:
+
+B(t)
+
+B(0) = P0
+B'(0) = n(P1-P0)
+B''(0) = n(n-1)(P2 - 2P1 + P0)
+
+B(1) = Pn
+B'(1) = n(Pn-Pn-1)
+B''(1) = n(n-1)(Pn - 2Pn-1 + Pn-2)
+
+-------------------------------------------------------------------------------------
+
+Control Points of Bezier Curve:
+
+P(t) = (3t − t^3, 3t^2).
+
+Al ser cúbica, hay 4 puntos:
+
+Usando Bernstein formula:
+
+= P(t) = (1 − t)^3*P0 + 3t(1 − t)^2*P1 + 3t2(1 − t)P2 + t^3P3
+
+operamos blablabla llegamos a algo como esto:
+
+t^3(−P0 + 3P1 − 3P2 + P3) + t^2(3P0 − 6P1 + 3P2) + t(−3P0 + 3P1) + P0.
+
+igualamos a la funcion inicial:
+
+3t − t^3 = t^3(−x0 + 3x1 − 3x2 + x3) + t^2(3x0 − 6x1 + 3x2) + t(−3x0 + 3x1) + x0.
+
+De esa formula sacamos:
+
+-t^3 = t^3(−x0 + 3x1 − 3x2 + x3)
+0 = 3x0 -6x1 + 3x2
+3t = t(-3x0 + 3x1)
+0 = x0
+
+De ahi sacamos todas las x y repetimos el proceso para las y's.
+
+
+---------------------------------------------------------------------------------
+
+Formulas Curvas:
+
+B-Splines:
+
+Quadratic: Pi(t) = 1/2*(t^2 - 2t +1)Psub(i-1) + 1/2*(-2t^2 + 2t +1)Pi + t^2/2Psub(i+1)
+
+Cubic:1/6*(-t^3+3t^2-3t+1)Psub(i-1) + 1/6*(3t^3-6t^2+4)Pi + 1/6*(-3t^3+3t^2+3t+1)*Psub(i+1) + t^3/6 *Psub(i+2)
+
+Q = Simbolo de multiplicacion
+
+Lagrange: L(n i)(t) = Qsub(j!=i) (t - tj) / Qsub(j!=i) (ti - tj), for i = 0,....,n d(t) = Epsilon (n i=0) L (n i) (t) Pi
+
+Hermite:
+
+
+d(t) = (2t^3 - 3t^2 + 1)P0 + (-2t^3 + 3t^2)P1 + (t3 - 2t^2 + t)v0 + (t^3 - t^2)v1 for t€[0,1]
+
+Bezier:
+
+fi(t) = Bn,i(t) = (n i)*t^i(1-t)^(n-i) || 0 <= i <= n, 0^0 = 1
+
+(n i) = n! / (i!*(n-i)!)
+
+
+
+

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="592e2443-d04b-43cf-90ab-ebdc9ccb781e" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="importAutomatically" value="true" />
+        <option name="vmOptionsForImporter" value="-Xmx768m" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="1kjG0q2LLyec4DZ8Hsf7nQvkZFF" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="settings.editor.selected.configurable" value="reference.settings.project.maven.importing" />
+  </component>
+  <component name="RunManager">
+    <configuration name="Main" type="Application" factoryName="Application" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="bdm.labs.hbase.Main" />
+      <module name="2_hbase" />
+      <option name="PROGRAM_PARAMETERS" value="-write 100" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="592e2443-d04b-43cf-90ab-ebdc9ccb781e" name="Default Changelist" comment="" />
+      <created>1606206367175</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1606206367175</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="69" y="127" width="1089" height="518" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606208085821">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="69" y="127" width="1089" height="518" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1280.680@0.0.1280.680" timestamp="1606208085821" />
+    <state x="371" y="130" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1606206567886">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="371" y="130" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1280.680@0.0.1280.680" timestamp="1606206567886" />
+    <state x="421" y="61" key="FileChooserDialogImpl" timestamp="1606241138990">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="421" y="61" key="FileChooserDialogImpl/0.0.1280.680@0.0.1280.680" timestamp="1606241138990" />
+    <state width="1237" height="51" key="GridCell.Tab.0.bottom" timestamp="1606241277851">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="51" key="GridCell.Tab.0.bottom/0.0.1280.680@0.0.1280.680" timestamp="1606241277851" />
+    <state width="1237" height="51" key="GridCell.Tab.0.center" timestamp="1606241277851">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="51" key="GridCell.Tab.0.center/0.0.1280.680@0.0.1280.680" timestamp="1606241277851" />
+    <state width="1237" height="51" key="GridCell.Tab.0.left" timestamp="1606241277851">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="51" key="GridCell.Tab.0.left/0.0.1280.680@0.0.1280.680" timestamp="1606241277851" />
+    <state width="1237" height="51" key="GridCell.Tab.0.right" timestamp="1606241277851">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="51" key="GridCell.Tab.0.right/0.0.1280.680@0.0.1280.680" timestamp="1606241277851" />
+    <state x="316" y="46" key="NewModule_or_Project.wizard" timestamp="1606241142428">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="316" y="46" key="NewModule_or_Project.wizard/0.0.1280.680@0.0.1280.680" timestamp="1606241142428" />
+    <state x="144" y="0" key="SettingsEditor" timestamp="1606206491635">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="144" y="0" key="SettingsEditor/0.0.1280.680@0.0.1280.680" timestamp="1606206491635" />
+    <state x="349" y="169" key="com.intellij.ide.util.TipDialog" timestamp="1606206375997">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="349" y="169" key="com.intellij.ide.util.TipDialog/0.0.1280.680@0.0.1280.680" timestamp="1606206375997" />
+  </component>
+</project>

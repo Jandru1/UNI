@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 3.2</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+</head>
+
+<body>
+
+<h1>DCS - 3.2. Runge's phenomenon</h1>
+
+<canvas id="canvas1" height="600" width="800" class="bezier"  style="border:1px solid #d3d3d3;"></canvas>
+<br>
+<button type="button" onclick="doReset()">Reset</button>
+
+<button type="button" onclick="AddPoints()">Number of points</button>
+<input type="text" id="N" name="N" placeholder=" " required>
+
+
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, context1, points, myTransformation, style, drag = null, draggedPoint;
+
+
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        // default styles
+        style = {
+            curve:  { width: 1.5, color: "#333" },
+            line:   { width: 1, color: "#C00" },
+            point: { radius: 2, width: 1, color: "0", fill: "rgba(0,0,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        context1.translate(canvas1.width/2,canvas1.height/2);
+
+        context1.scale(3,-3) 
+// Reversed y-axis
+        // event handlers (only canvas1)
+        /*
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+        */
+
+        // TODO: This is just a stub
+        // Generate the correct points and interpolate them
+      drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(-100,-100, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+        drawRunge();
+
+        // Curve through points and vertices
+       drawCurve(context1, style, points); // Draw curve
+       drawVertices(context1, style, points); // Draw vertices as circles
+
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+
+        var half_width = bw/2;
+        var half_height = bh/2;
+        for (var x = -half_width; x <= half_width; x += delta) {
+            myContext.moveTo(x, -half_height);
+            myContext.lineTo(x, half_height);
+        }
+
+        for (var y = -half_height; y <= half_height; y += delta) {
+            myContext.moveTo(-half_width, y);
+            myContext.lineTo(half_width , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightgray";
+        myContext.stroke();
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        // Draw curve
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+        var currentPoint;
+        for (var i = -50; i <= 50.1; i=i+0.1) {
+            currentPoint =  {x:i, y:LagrangeUniform(i, points)};
+
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+        }
+        ctx.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    function AddPoints() {
+
+        points = new Array();
+        var u = -1;
+
+        for (var i=1;i<=N.value ;i++) {
+                points.push({x:u*50,y:50*(1/(1+(25*u*u)))});
+                u=(2*i/(N.value-1))-1;
+            }
+            drawCanvas();
+
+           }
+
+    function drawRunge() {
+
+        context1.beginPath();
+        context1.strokeStyle = "blue";
+        for (var x = -1; x < 1; x += 0.01) {
+            var y = 1/(1+(25*x*x));
+            if (x == -1) {
+                 context1.moveTo(x*50, y*50); // First point
+            }
+            else {
+                 context1.lineTo(x*50, y*50); // Subsequent points
+            }
+        }
+            context1.stroke();
+
+    }
+
+    function doReset () {
+        myTransformation = function(p){return p}; //Identity transform
+        context1.clearRect(-100, -100, canvas1.width, canvas1.height);  // Clear canvas
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+        drawRunge();
+
+    }
+
+    function LagrangeUniform(x, points) {
+
+        var sum = 0;
+        for (var i = 0; i<points.length; ++i) {
+            var prod = 1;
+            for (var j = 0; j < points.length; ++j) {
+                if (j != i) {
+                   prod*=(x-points[j].x)/(points[i].x-points[j].x);
+                }
+            }
+            sum += points[i].y*prod;
+        }
+        return sum;
+
+    }
+
+
+
+
+
+</script>
+</body>
+</html>

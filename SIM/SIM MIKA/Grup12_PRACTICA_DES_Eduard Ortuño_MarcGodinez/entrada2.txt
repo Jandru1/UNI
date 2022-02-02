@@ -1,0 +1,16 @@
+Temps de simulació
+4320
+temps entre arribades a urgencies
+15
+desviació entre arribades a urgencies
+4
+quantitat de metges
+2
+quantitat de sales d'espera
+2
+capacitat sales d'espera
+40
+temps mig de les consultes
+40
+desviacio temps de les consultes
+10

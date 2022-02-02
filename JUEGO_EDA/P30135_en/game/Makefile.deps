@@ -1,0 +1,38 @@
+AIAntiguo.o: AIAntiguo.cc Player.hh Info.hh Settings.hh Structs.hh \
+ Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIDemo.o: AIDemo.cc Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandret.o: AIJandret.cc Player.hh Info.hh Settings.hh Structs.hh \
+ Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandro.o: AIJandro.cc Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandru.o: AIJandru.cc Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandru2.o: AIJandru2.cc Player.hh Info.hh Settings.hh Structs.hh \
+ Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandru_V4.o: AIJandru_V4.cc Player.hh Info.hh Settings.hh Structs.hh \
+ Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandru_juego.o: AIJandru_juego.cc Player.hh Info.hh Settings.hh \
+ Structs.hh Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+AIJandruns_10.o: AIJandruns_10.cc Player.hh Info.hh Settings.hh \
+ Structs.hh Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+AINull.o: AINull.cc Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh
+Action.o: Action.cc Action.hh Structs.hh Utils.hh Defs.hh
+Board.o: Board.cc Board.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh
+Game.o: Game.cc Game.hh Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh Board.hh
+Info.o: Info.cc Info.hh Settings.hh Structs.hh Utils.hh Defs.hh State.hh
+Jandru_v5.o: Jandru_v5.cc Player.hh Info.hh Settings.hh Structs.hh \
+ Utils.hh Defs.hh State.hh Action.hh Random.hh Registry.hh
+Main.o: Main.cc Game.hh Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh Board.hh
+Player.o: Player.cc Player.hh Info.hh Settings.hh Structs.hh Utils.hh \
+ Defs.hh State.hh Action.hh Random.hh Registry.hh
+Random.o: Random.cc Random.hh Utils.hh Defs.hh
+Registry.o: Registry.cc Registry.hh Utils.hh Defs.hh
+Settings.o: Settings.cc Settings.hh Structs.hh Utils.hh Defs.hh
+State.o: State.cc State.hh Structs.hh Utils.hh Defs.hh
+Structs.o: Structs.cc Structs.hh Utils.hh Defs.hh
+Utils.o: Utils.cc Utils.hh Defs.hh

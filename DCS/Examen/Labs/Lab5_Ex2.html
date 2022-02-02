@@ -1,0 +1,287 @@
+<html>
+     <head>
+     <title>DCS - 5</title>
+
+     </head>
+
+     <body>
+
+     <h1>DCS - Lab 5 - Surfaces</h1>
+
+     <script src="math.min.js"></script>
+   <script src="three.min.js"></script>
+   <script src="OrbitControlsDCS.js"></script>
+
+    <script type="text/javascript">
+       /**
+       * Partially based on code by Ikaros Kappler from http://int2byte.de/public/blog.20160129_Three.js_Basic_Scene_Setup/
+       **/
+   var windowWidth=800.0, windowHeight=600.0;
+
+       // Create a scene
+       this.scene = new THREE.Scene();
+
+       // Create a camera
+   // Parameters: vertical field of view, aspect ratio, near-clipping plane, far-clipping plane
+   var camera = new THREE.PerspectiveCamera(45, windowWidth / windowHeight, 0.1, 1000);
+
+       // Create a THREE renderer
+       this.renderer = new THREE.WebGLRenderer( { antialias : true, alpha:true } );
+       this.shadowMapEnabled = true;
+       this.renderer.setSize(windowWidth, windowHeight);
+       document.body.appendChild(renderer.domElement); // append it to the DOM
+
+       // position and point the camera to the center of the scene (0,0,0)
+       camera.position.x = 50;
+       camera.position.y = 60;
+       camera.position.z = 50;
+       camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+   // Create light, with same position and direction as camera
+       this.spotLight = new THREE.SpotLight(0xffffff);
+   this.spotLight.position.copy(camera.position)
+   this.spotLight.target.position.copy (camera.lookAt);
+       scene.add(spotLight);
+
+       //Factorial memoization
+       var mem_fact = [1,1];
+
+       //Binomial Coefficient memoization
+       var mem_bin_coef = {};
+
+   /**** Here is where the important stuff is: definition of parametric geometry ****/
+   // Examples of three parametric surface functions
+
+   // Note: the parametric functions will be evaluated only on [0,1] x [0,1]
+   // The function is called like this:
+   // for v=0 to 1 step ...
+   //    for u=0 to 1  step...
+   //        call function(u,v)
+
+   planeFunction = function(u, v)
+   {
+     var s = this.functionExtent; //stretch value
+     var x = s*u;
+     var z = s*v;
+     var y = 15*(u+v);
+     return new THREE.Vector3(x, y, z);
+   };
+
+   waveFunction = function (u, v) {
+           var s = this.functionExtent; //stretch value
+           var x = s*u;
+     var z = s*v;
+           var y = 10*Math.sin(2*(u+v)*Math.PI);
+           return new THREE.Vector3(x, y, z);
+   };
+
+   ellipsoidFunction = function (u, v) {
+     var a=40;
+     var b=20;
+     var c=30;
+     u = u * 2* Math.PI; // scale u to [0, 2PI]
+     v = v * Math.PI; // scale v to [0, PI]
+           var x = a*Math.cos(u)*Math.sin(v);
+     var z = b*Math.sin(u)*Math.sin(v);
+           var y = c*Math.cos(v);
+           return new THREE.Vector3(x, y, z);
+   };
+
+       /*
+       Factorial
+       */
+       function factorial(x) {
+           if (x < 0)                                  //In case it is less than 0  _-ERROR-_
+               return -1;
+           else if (mem_fact.length <= x)              //If it is not in the array, calculate it and all it's previous numbers
+               mem_fact.push(factorial(x-1) * x);
+           return mem_fact[x];
+       }
+
+       /*
+       Binomial Coefficient
+       */
+       function binomialCoefficient(n, k) {
+           if ((k < 0) || (n < 0) || (n < k))                                            //Wrong input _-ERROR-_
+               return -1;
+           if (! (n in mem_bin_coef))                                                    //If n doesn't exisit in memoization object, add it
+               mem_bin_coef[n] = {};
+           if (! (k in mem_bin_coef[n]))                                                 //If n over k doesn't exist in memoization object, add it
+               mem_bin_coef[n][k] = factorial(n) / (factorial(k) * factorial(n - k));
+           return mem_bin_coef[n][k];
+       }
+
+       /*
+       Retrieve Bézier Basis Function Guided By N & i
+       */
+       function getBasisFunctionNI(n, i) {
+           return function (t) {
+               var binomial = binomialCoefficient(n, i);
+               var t_pow_i = Math.pow(t, i);
+               var mirror_t_pow_i = Math.pow(1 - t, n - i);
+               return binomial * t_pow_i * mirror_t_pow_i;
+           };
+       }
+
+       /*
+       Multiply Point By Scalar
+       */
+       function pointScale3D(point, scalar) {
+           return {x: point.x * scalar, y: point.y * scalar, z: point.z * scalar};
+       }
+
+       /*
+       Translate a point
+       */
+       function pointTranslate3D(point, translation) {
+           return {x: point.x + translation.x, y: point.y + translation.y, z: point.z + translation.z};
+       }
+
+       /*
+       Bezier Surface
+       */
+       function bezierSurface(controlPoints) {
+           var m = controlPoints.length - 1;
+           if (m < 0) return function (u, w) {return new THREE.Vector3(0, 0, 0)};
+           var n = controlPoints[0].length - 1;
+
+           return function (u, w) {
+               var point = {x: 0, y: 0, z: 0};
+
+               for (var i = 0; i <= m; i++) {
+                   for (var j = 0; j <= n; j++) {
+                       var bernstein_1 = getBasisFunctionNI(m, i)(u); // Bmi
+                       var bernstein_2 = getBasisFunctionNI(n, j)(w); // Bnj
+                       var current_point = controlPoints[i][j]; // Pij
+                       var pull = pointScale3D( pointScale3D(current_point, bernstein_1), bernstein_2); // Bmi * Bnj * Pij
+                       point = pointTranslate3D(point, pull); // Accumulate pull
+                   }
+               }
+
+               return new THREE.Vector3(point.x, point.y, point.z);
+           }
+       }
+
+       /*
+       Bezier Surface Centered By Guides
+       */
+       function bezierSurfaceCentered(controlPoints, scale) {
+           var m = controlPoints.length - 1;
+           if (m < 0) return function (u, w) {return new THREE.Vector3(0, 0, 0)};
+           var n = controlPoints[0].length - 1;
+
+           return function (u, w) {
+               var point = {x: 0, y: 0, z: 0};
+
+               var max_x = Number.NEGATIVE_INFINITY;
+               var min_x = Number.POSITIVE_INFINITY;
+               var max_z = Number.NEGATIVE_INFINITY;
+               var min_z = Number.POSITIVE_INFINITY;
+
+               for (var i = 0; i <= m; i++) {
+                   for (var j = 0; j <= n; j++) {
+                       var bernstein_1 = getBasisFunctionNI(m, i)(u); // Bmi
+                       var bernstein_2 = getBasisFunctionNI(n, j)(w); // Bnj
+                       var current_point = pointScale3D(controlPoints[i][j], scale); // Pij
+
+                       // Calculate maximums and minimums to center the point
+                       if (current_point.x < min_x) min_x = current_point.x;
+                       if (current_point.x > max_x) max_x = current_point.x;
+                       if (current_point.z < min_z) min_z = current_point.z;
+                       if (current_point.z > max_z) max_z = current_point.z;
+
+                       var pull = pointScale3D( pointScale3D(current_point, bernstein_1), bernstein_2); // Bmi * Bnj * Pij
+                       point = pointTranslate3D(point, pull); // Accumulate pull
+                   }
+               }
+
+               return new THREE.Vector3(point.x - (max_x + min_x)/2, point.y, point.z - (max_z + min_z)/2);
+           }
+       }
+
+   // Function to create the actual mesh
+       function createMeshCentered(geom) {
+     // Translate geometry to center of scene
+           geom.applyMatrix(new THREE.Matrix4().makeTranslation(-functionExtent/2, 0, -functionExtent/2));
+           // Assign material
+           var meshMaterial = new THREE.MeshLambertMaterial({color:0xff5555, wireframe:false}); // You can disable wireframe
+           meshMaterial.side = THREE.DoubleSide;
+           // create a multimaterial and return it
+           return THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial]);
+       }
+
+       function createMeshAsIs(geom) {
+           // Assign material
+           var meshMaterial = new THREE.MeshLambertMaterial({color:0xff5555, wireframe:false});
+           meshMaterial.side = THREE.DoubleSide;
+           // create a multimaterial and return it
+           return THREE.SceneUtils.createMultiMaterialObject(geom, [meshMaterial]);
+       }
+
+   // Create and add parametric surface function (i.e., parametric geometry) to scene
+   this.functionExtent = 60;
+   var slides = functionExtent/3; //Number of evaluations on first variable
+   var stacks = functionExtent/3; //Number of evaluations on second variable
+
+   //var parametricFunction = planeFunction; // Example 1
+   //var parametricFunction = waveFunction;  // Example 2
+   //var parametricFunction = ellipsoidFunction;  // Example 3
+
+       var bezierControlPoints =   [[{x: 0, y: 0, z: 0}, {x: 3, y: 0, z: 3}, {x: 6, y: 0, z: 3}, {x: 9, y: 0, z: 0}],
+                                    [{x: 0, y: 2, z: 2}, {x: 3, y: 2, z: 5}, {x: 6, y: 2, z: 5}, {x: 9, y: 2, z: 2}],
+                                    [{x: 0, y: 4, z: 0}, {x: 3, y: 4, z: 3}, {x: 6, y: 4, z: 3}, {x: 9, y: 4, z: 0}],
+                                    [{x: 0, y: 6, z: 6}, {x: 3, y: 6, z: 5}, {x: 6, y: 6, z: 3}, {x: 9, y: 6, z: 2}]];
+
+       var parametricFunction = bezierSurfaceCentered(bezierControlPoints, 7.5);
+
+   // Create parametric geometry based on parametric function
+   var graphGeometry = new THREE.ParametricGeometry(parametricFunction, slides, stacks);
+
+   // Add it to scene
+   this.scene.add(createMeshAsIs(graphGeometry));
+
+   /****************************/
+
+   // Auxiliary things
+
+       // Add grid helper
+   var gridExtent=80;
+       var gridHelper = new THREE.GridHelper( gridExtent, gridExtent/10 );
+       gridHelper.colorGrid = 0xE8E8E8;
+       this.scene.add( gridHelper );
+
+       // Add an axis helper
+       var ah = new THREE.AxisHelper(50);
+       ah.position.y -= 0.1;  // The axis helper should not interfere with the grid helper
+       this.scene.add( ah );
+
+       // Add an orbit control helper, to navigate scence with mosue
+       var _self = this;
+       this.orbitControls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+       // Always move the point light with the camera. Looks much better ;)
+       this.orbitControls.addEventListener( 'change',
+       function() { _self.spotLight.position.copy(_self.camera.position); }
+       );
+       this.orbitControls.enableDamping = true;
+       this.orbitControls.dampingFactor = 1.0;
+       this.orbitControls.enableZoom    = true;
+       this.orbitControls.target.copy(new THREE.Vector3(0, 0, 0));
+
+       // This is the basic render function. It will be called perpetual, again and again,
+       // depending on your machines possible frame rate.
+       this._render = function () {
+           // Pass the render function itself
+           requestAnimationFrame(this._render);
+           this.renderer.render(this.scene, this.camera);
+       };
+
+       // Call the rendering function. This will cause an infinite recursion
+       this._render();
+
+   </script>
+     <br>
+   Note: X axis is red, Y axis is green, Z axis is blue.
+   Each grid square on the plane Y=0 has size 10x10.
+     </body>
+
+     </html>

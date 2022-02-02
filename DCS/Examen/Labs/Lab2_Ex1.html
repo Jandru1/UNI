@@ -1,0 +1,331 @@
+<html>
+   <head>
+       <meta charset="UTF-8"/>
+       <title>DCS - 2.1</title>
+   </head>
+
+   <body>
+
+       <h1>DCS - 2.1 Helices in 3D</h1>
+
+       <script src="math.min.js"></script>
+       <script src="three.min.js"></script>
+       <script src="OrbitControlsDCS.js"></script>
+
+       <script type="text/javascript">
+           /**
+           * Based on code by Ikaros Kappler from http://int2byte.de/public/blog.20160129_Three.js_Basic_Scene_Setup/
+           **/
+
+           //Regular Expression to validate floats
+
+           var floatRegExp = RegExp('^[+-]?([0-9]*\.[0-9]+|[0-9]+)$');
+
+           //Interface with HTML
+
+           function getAndTestInput(regex, inputArray) {
+               var data = []
+               var correct = true;
+               for (let i = 0; i < inputArray.length; i++) {
+                   var x = document.getElementById(inputArray[i]).value;
+                   if (! regex.test(x)) {
+                       document.getElementById(inputArray[i]).color = "red";
+                       correct = false;
+                   }
+                   else document.getElementById(inputArray[i]).color = "black";
+                   data.push(x);
+               }
+               return {data: data, correct: correct}
+           }
+
+           //Program input
+
+           var radiusX = 2.5;
+           var radiusZ = 1.5;
+           var upSpeed = 0.5;
+           var numSpirals = 5;
+           var radiusIncrease = 0.5;
+           var which_curve = "elliptic_helix";
+
+           var pitch, x_radius, z_radius, spiral_radius, n_spirals;
+           var radio_elliptic, radio_spiral;
+
+           var tileSize = 10; //Tiles are 10x10 (px²)
+           var numTiles = 9; //Grid is 9x9 (tiles²)
+
+           // Create new scene
+           this.scene = new THREE.Scene();
+
+           // Create a camera to look through
+           this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+           // Initialize a new THREE renderer (you are also allowed
+           // to pass an existing canvas for rendering).
+           this.renderer = new THREE.WebGLRenderer( { antialias : true, alpha:true } );
+           this.renderer.setSize(800, 600);
+
+           // ... and append it to the DOM
+           document.body.appendChild(renderer.domElement);
+
+           var lineGeom = new THREE.Geometry();
+
+           buildGeometry(lineGeom);
+
+           var lineMat = new THREE.LineBasicMaterial( {
+               color:  0xA000A0  // purple; the default is white
+           } );
+
+           var line = new THREE.Line( lineGeom, lineMat, THREE.LineStrip );
+           line.name = "RenderedCurve";
+
+           this.scene.add(line);
+
+           function updateGeometry() {
+               lineGeom = new THREE.Geometry();
+               buildGeometry(lineGeom);
+               scene.remove(line);
+               line = new THREE.Line(lineGeom, lineMat, THREE.LineStrip);
+               scene.add(line);
+           }
+
+           //Make the curve's parameters responsive
+
+           window.addEventListener('load', function() {
+               //CURVE SELECTION
+
+               radio_elliptic = document.getElementById("radio_elliptic");
+               radio_elliptic.onchange = function() {
+                   which_curve = "elliptic_helix";
+                   document.getElementById("spiral_radius_block").hidden = "hidden";
+                   document.getElementById("x_radius_block").removeAttribute("hidden");
+                   document.getElementById("z_radius_block").removeAttribute("hidden");
+                   updateGeometry();
+               };
+               radio_elliptic.checked = true;
+
+               radio_spiral = document.getElementById("radio_spiral");
+               radio_spiral.onchange = function() {
+                   which_curve = "spiral_helix";
+                   document.getElementById("spiral_radius_block").removeAttribute("hidden");
+                   document.getElementById("x_radius_block").hidden = "hidden";
+                   document.getElementById("z_radius_block").hidden = "hidden";
+                   updateGeometry();
+               };
+
+               //CURVE PARAMETRIZATION
+
+               //Pitch
+               pitch = document.getElementById("pitch");
+               pitch.value = upSpeed;
+               pitch.onchange = function() {
+                   var input = getAndTestInput(floatRegExp, ["pitch"]);
+                   if (input.correct) {
+                       upSpeed = input.data[0];
+                       updateGeometry();
+                   }
+               };
+
+               //X Radius
+               x_radius = document.getElementById("x_radius");
+               x_radius.value = radiusX;
+               x_radius.onchange = function() {
+                   var input = getAndTestInput(floatRegExp, ["x_radius"]);
+                   if (input.correct) {
+                       radiusX = input.data[0];
+                       updateGeometry();
+                   }
+               };
+
+               //Z Radius
+               z_radius = document.getElementById("z_radius");
+               z_radius.value = radiusZ;
+               z_radius.onchange = function() {
+                   var input = getAndTestInput(floatRegExp, ["z_radius"]);
+                   if (input.correct) {
+                       radiusZ = input.data[0];
+                       updateGeometry();
+                   }
+               };
+
+               //Spiral Radius
+               spiral_radius = document.getElementById("spiral_radius");
+               spiral_radius.value = radiusIncrease;
+               spiral_radius.onchange = function() {
+                   var input = getAndTestInput(floatRegExp, ["spiral_radius"]);
+                   if (input.correct) {
+                       radiusIncrease = input.data[0];
+                       updateGeometry();
+                   }
+               };
+
+               //Nº Spirals
+               n_spirals = document.getElementById("n_spirals");
+               n_spirals.value = numSpirals;
+               n_spirals.onchange = function() {
+                   var input = getAndTestInput(floatRegExp, ["n_spirals"]);
+                   if (input.correct) {
+                       numSpirals = input.data[0];
+                       updateGeometry();
+                   }
+               };
+           });
+
+
+           // Add some light
+           this.pointLight = new THREE.PointLight(0xFFFFFF);
+           //this.pointLight = new THREE.AmbientLight(0xFFFFFF);
+
+           // set its position
+           this.pointLight.position.x = 10;
+           this.pointLight.position.y = 50;
+           this.pointLight.position.z = 130;
+
+           // add to the scene
+           this.scene.add( this.pointLight );
+
+
+           // Add grid helper
+           var gridHelper = new THREE.GridHelper( tileSize * numTiles, numTiles );
+           gridHelper.colorGrid = 0xE8E8E8;
+           this.scene.add( gridHelper );
+
+
+           // Add an axis helper
+           var ah = new THREE.AxisHelper(50);
+           ah.position.y -= 0.1;  // The axis helper should not interfere with the grid helper
+           this.scene.add( ah );
+
+
+           // Set the camera position
+           this.camera.position.set( 50, 50, 50);
+           this.camera.lookAt(line.position);
+
+           // Finally we want to be able to rotate the whole scene with the mouse:
+           // Add an orbit control helper.
+           var _self = this;
+           this.orbitControls = new THREE.OrbitControls( this.camera, this.renderer.domElement );
+           // Always move the point light with the camera. Looks much better ;)
+           this.orbitControls.addEventListener( 'change',
+           function() { _self.pointLight.position.copy(_self.camera.position); }
+           );
+           this.orbitControls.enableDamping = true;
+           this.orbitControls.dampingFactor = 1.0;
+           this.orbitControls.enableZoom    = true;
+           this.orbitControls.target.copy(line.position);
+
+
+           // This is the basic render function. It will be called perpetual, again and again,
+           // depending on your machines possible frame rate.
+           this._render = function () {
+               // Pass the render function itself
+               requestAnimationFrame(this._render);
+               this.renderer.render(this.scene, this.camera);
+           };
+
+           // Call the rendering function. This will cause an infinite recursion
+           this._render();
+
+
+           /**
+           *  This is the function where the actual points on the curve are computed
+           *
+           *  TODO: Change this function to draw a different curve
+           */
+
+           function buildGeometry(lineGeometry) {
+               if (which_curve == "elliptic_helix") buildEllipticalHelix(lineGeometry);
+               else buildSpiralHelix(lineGeometry);
+           }
+
+           function buildEllipticalHelix(lineGeometry) {
+               var circleDivisions = 128;
+               var stepLen = 2 * Math.PI / circleDivisions;
+               var numSteps = numSpirals * circleDivisions;
+               var upStep = (tileSize * upSpeed) / circleDivisions;
+               for (var i=0; i <= numSteps; i++) {
+                   var currentPoint = {x: 0, y: 0, z: 0};
+                   var angle = i * stepLen;
+                   currentPoint.x = Math.cos(angle) * radiusX * tileSize;
+                   currentPoint.z = Math.sin(angle) * radiusZ * tileSize;
+                   currentPoint.y = i * upStep;
+                   lineGeom.vertices.push(new THREE.Vector3(currentPoint.x, currentPoint.y, currentPoint.z));
+               }
+           }
+
+           function buildSpiralHelix(lineGeometry) {
+               var circleDivisions = 128;
+               var stepLen = 2 * Math.PI / circleDivisions;
+               var numSteps = numSpirals * circleDivisions;
+               var upStep = (tileSize * upSpeed) / circleDivisions;
+               for (var i=0; i <= numSteps; i++) {
+                   var currentPoint = {x:0, y: 0, z: 0};
+                   var angle = i * stepLen;
+                   currentPoint.x = Math.cos(angle) * (i / circleDivisions) * radiusIncrease * tileSize;
+                   currentPoint.z = Math.sin(angle) * (i / circleDivisions) * radiusIncrease * tileSize;
+                   currentPoint.y = i * upStep;
+                   lineGeom.vertices.push(new THREE.Vector3(currentPoint.x, currentPoint.y, currentPoint.z));
+               }
+           }
+
+       </script>
+
+       <!-- INTERACTIVE INPUT -->
+       <div style="float:left; text-align:left; overflow:auto">
+           <!-- SELECT CURVE -->
+           <p>Curve Type:</p>
+           <input type="radio" id="radio_elliptic" name="which_curve"/>
+           <label>Elliptic Helix</label>
+           <br>
+
+           <input type="radio" id="radio_spiral" name="which_curve"/>
+           <label>Spiral Helix</label>
+           <br>
+           <br>
+
+           <!-- HOW MANY TILES UPWARD PER TURN-->
+           <label>Pitch:</label>
+           <br>
+           <input type="text" id="pitch" name="pitch" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="0.5"/>
+           <br>
+
+           <!-- NUMBER OF DRAWN SPIRALS-->
+           <label>Nº Turns:</label>
+           <br>
+           <input type="text" id="n_spirals" name="n_spirals" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="5.0"/>
+           <br>
+
+           <!-- X RADIUS -->
+           <span id="x_radius_block" name="x_radius_block">
+               <label>X Radius:</label>
+               <br>
+               <input type="text" id="x_radius" name="x_radius" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="2.5"/>
+               <br>
+           </span>
+
+           <!-- Z RADIUS -->
+           <span id="z_radius_block" name="z_radius_block">
+               <label>Z Radius:</label>
+               <br>
+               <input type="text" id="z_radius" name="z_radius" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="1.5"/>
+               <br>
+           </span>
+
+           <!-- SPIRAL RADIUS -->
+           <span id="spiral_radius_block" name="spiral_radius_block" hidden="hidden">
+               <label>Radius Increase:</label>
+               <br>
+               <input type="text" id="spiral_radius" name="spiral_radius" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="0.5"/>
+               <br>
+           </span>
+
+           <!-- NOTES -->
+           <p>Note:</p>
+           <p>X axis is <span style="color:red">red</span></p>
+           <p>Y axis is <span style="color:greenyellow">green</span></p>
+           <p>Z axis is <span style="color:blue">blue</span></p>
+           <p>Each grid is 1x1</p>
+       </div>
+
+   </body>
+
+</html>

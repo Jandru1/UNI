@@ -1,0 +1,28 @@
+Temps de simulació
+720
+temps per a tallar
+30
+desviació entre arribades a peluqueria
+5
+quantitat de babers1
+1
+quantitat de babers2
+2
+quantitat de babers3
+3
+capacitat sala d'espera
+4
+temps per a netejar
+10
+temps deixar de esperar
+50
+quantitat de cadires per tallar
+3
+quantitat de cadires per rentar
+2
+desviacio temps de tallar cabell
+10
+desviació temps de rentar el cabell
+3
+temps entre arribades
+20

@@ -1,0 +1,809 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>DCS - 4.2</title>
+
+    <!--- Math.js library, for matrix manipulation, and many other things--->
+    <script src="math.min.js"></script>
+    <style>
+        .curve_element{
+            display: block;
+            height: 50px;
+            width: 100%;
+            line-height: 50px;
+            text-align: center;
+            border-bottom: 1px solid #000000;
+        }
+    </style>
+</head>
+
+<body>
+
+
+<h1>DCS - 4.2. Bézier curves - font design</h1>
+<div style="display:block; height:600px; width:100%;">
+    <canvas id="canvas1" height="700" width="800" class="bezier"  style="border:1px solid #d3d3d3; float:left"></canvas>
+    <div style="height:700px; width:15px; display:block; float:left"></div>
+    <div style="display:inline-block; height:700px; width: calc(100% - 850px)">
+        <div style="float: left">
+            <label>R: </label> <input id="red_input"   type="range" min="0" max="255" oninput="changeColor()"/><br/>
+            <label>G: </label> <input id="green_input" type="range" min="0" max="255" oninput="changeColor()"/><br/>
+            <label>B: </label> <input id="blue_input"  type="range" min="0" max="255" oninput="changeColor()"/><br/>
+        </div>
+        <div id="color_display" style="display:inline-block; height:88px; width:88px; background-color: aquamarine;"></div>
+        <div style="display:block; height: 15px; width: 300px;"></div>
+        <div style="display:block; height: 30px; width: 300px; text-align: center">
+            <label>Width: </label>
+            <input id="width_input" type="text" pattern="[-+]?([0-9]*\.[0-9]+|[0-9]+)" value="2" onchange="changeWidth()"/>
+        </div>
+        <div id="curve_selector" style="display:block; height: 350px; width: 300px; overflow-y: scroll">
+        </div>
+        <div style="display:block; height: 30px; width: 300px; text-align: center;">
+            <button onclick="addCurve()">ADD</button>
+            <br/>
+            <button onclick="saveCurve()">SAVE</button>
+            <button onclick="downloadImage()">DOWNLOAD IMAGE</button>
+            <br/>
+            <input id="load" type="file"/>
+        </div>
+        <div>
+            <br/>
+            <br/>
+            <label>Press CONTROL to add points</label>
+            <br/>
+            <label>Press SHIFT to remove points</label>
+            <br/>
+            <label>Press ADD to create new curves</label>
+            <br/>
+            <label>Select a curve to modify it</label>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    /*
+    * Part of this code is based on:
+        * http://blogs.sitepoint.com/html5-canvas-draw-quadratic-curves/
+        * http://blogs.sitepoint.com/html5-canvas-draw-bezier-curves/
+    */
+
+    var canvas1, context1, points, myTransformation, drag = null, draggedPoint;
+
+    var style, bezier_style, guide_style;
+
+    var mem_fact, mem_bin_coef; //Memoization
+
+    var step;
+
+    var curves, selected_curve, n_curves;
+
+    var letter = 'N'; // Your letter goes here
+
+    function init() {
+
+        myTransformation = function(p){return p}; //Identity transform
+
+        points = [{ x:100, y:300 },{ x:200, y:300 },{ x:300, y:300 },{ x:400, y:300 }];
+
+        // default styles
+        style = {
+            curve:	{ width: 6, color: "#333" },
+            line:	{ width: 1, color: "#C00" },
+            point: { radius: 10, width: 2, color: "#900", fill: "rgba(200,200,200,0.5)", arc1: 0, arc2: 2 * Math.PI }
+        }
+
+        bezier_style = {
+            width : 2,
+            color : "rgba(32,174,205,1)"
+        }
+
+        guide_style = {
+            width : 2,
+            color : "rgba(0,0,0,1)"
+        }
+
+        point_style = {
+            width : 2,
+            color : "rgba(170, 10, 35, 1)",
+            fill : "rgba(200, 200, 200, 0.5)",
+            smallRadius : 7,
+            bigRadius : 10,
+        }
+
+        // line style defaults
+        context1.lineCap = "round";
+        context1.lineJoin = "round";
+
+        // mouse event handlers (only canvas1)
+        canvas1.onmousedown = dragStart;
+        canvas1.onmousemove = dragging;
+        canvas1.onmouseup = canvas1.onmouseout = dragEnd;
+
+        mem_fact = [1,1];
+        mem_bin_coef = {};
+
+        step = 1/64;
+
+        n_curves = 0;
+        curves = {};
+        addCurve();
+        curves[1].points = [{ x:100, y:300 },{ x:200, y:300 },{ x:300, y:300 },{ x:400, y:300 }];
+
+        drawCanvas();
+    }
+
+
+    /**
+     Basic drawing methods
+     **/
+
+
+    // draw canvas
+    function drawCanvas() {
+        // Clear everything
+        context1.clearRect(0, 0, canvas1.width, canvas1.height);  // Clear canvas
+
+        // Background grids
+        drawGrid(context1,canvas1.width, canvas1.height); // Draw background grid
+
+        /*
+        // Curve through points and vertices
+        drawCurve(context1, style, points); // Draw curve
+        drawVertices(context1, style, points); // Draw vertices as circles
+        drawCubicBezierCurve(context1, bezier_style, points, step);
+        */
+
+        // Background letter
+		context1.fillStyle = "lightgray";
+        context1.font = "800px Times";
+        context1.fillText(letter,100,600);
+
+
+        for (let id in curves) {
+            var curve_style = {
+                width : curves[id].width,
+                color : curves[id].color
+            }
+            drawCubicBezierCurve(context1, curve_style, curves[id].points, step);
+        }
+
+
+        if (curves.hasOwnProperty(selected_curve)) {
+            drawCubicBezierGuides(context1, guide_style, curves[selected_curve].points);
+            drawCubicBezierPoints(context1, point_style, curves[selected_curve].points);
+        }
+
+    }
+
+    // Draw only the curves
+    function drawImage() {
+        // Clear everything
+        context1.clearRect(0, 0, canvas1.width, canvas1.height);
+
+        //Draw all curves
+        for (let id in curves) {
+            var curve_style = {
+                width : curves[id].width,
+                color : curves[id].color
+            }
+            drawCubicBezierCurve(context1, curve_style, curves[id].points, step);
+        }
+    }
+
+
+    // Draw a background grid
+    function drawGrid(myContext,bw,bh){
+        var delta = 50; // grid cell size
+        myContext.beginPath();
+
+        for (var x = 0; x <= bw; x += delta) {
+            myContext.moveTo(x, 0);
+            myContext.lineTo(x, bh);
+        }
+
+        for (var y = 0; y <= bh; y += delta) {
+            myContext.moveTo(0, y);
+            myContext.lineTo(bw , y);
+        }
+
+        myContext.lineWidth = 1;
+        myContext.strokeStyle = "lightblue";
+        myContext.stroke();
+
+        myContext.fillStyle = "black";
+        myContext.font = "12px Arial";
+        myContext.fillText("(0,0)",2,12);
+
+    }
+
+    // Draws a polygonal curve connecting the points, after applying the given transformation
+    function drawCurve(ctx, style, points, transformation) {
+        // The transformation is optional. If none provided, use identity transform
+        if (transformation===undefined) {
+            transformation = function(p){return p}; //Identity transform
+        }
+
+        // Draw curve
+        ctx.lineWidth = style.curve.width;
+        ctx.strokeStyle = style.curve.color;
+        ctx.beginPath();
+        var firstPoint = transformation(points[0]);
+        var currentPoint;
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+        for (var i = 0; i < points.length; i++) {
+            currentPoint =  transformation(points[i]);
+            ctx.lineTo(currentPoint.x, currentPoint.y);
+            ctx.moveTo(currentPoint.x, currentPoint.y);
+        }
+        ctx.stroke();
+    }
+
+    // Draw circles around vertices to facilitate drag and drop
+    function drawVertices (ctx, style, points) {
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            ctx.lineWidth = style.point.width;
+            ctx.strokeStyle = style.point.color;
+            ctx.fillStyle = style.point.fill;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, style.point.radius, style.point.arc1, style.point.arc2, true);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    /**
+     Methods to allow dragging transformedPoints around
+     **/
+
+    // start dragging
+    function dragStart(e) {
+        var event = e;
+        e = mousePos(e);
+        if (curves.hasOwnProperty(selected_curve)) { // If a curve is selected
+            var points = curves[selected_curve].points;
+            if (event.ctrlKey) { // If adding a point
+                if (points.length == 0) points.push(e);
+                else if (points.length == 1) {
+                    var diff = pointSubstract(e, points[0]);
+                    var thirdway = pointScalar(diff, 0.33);
+                    var two_thirds_way = pointScalar(diff, 0.67);
+
+                    //Append all points
+                    points.push(pointSum(points[0], thirdway));
+                    points.push(pointSum(points[0], two_thirds_way));
+                    points.push(e);
+                }
+                else {
+                    // Calculate the next point for continuity
+                    var continuity_point = calculateContinuity(points[points.length - 1], points[points.length - 2], 3, 3);
+
+                    // The point added
+                    var added_point = e;
+
+                    // Calculate a point that is midway from the continuity guide and the added point
+                    var diff = pointSubstract(added_point, continuity_point);
+                    var midway = pointScalar(diff, 0.5);
+                    var guide_point = pointSum(continuity_point, midway);
+
+                    // Append all points
+                    points.push(continuity_point);
+                    points.push(guide_point);
+                    points.push(added_point);
+                }
+            }
+            else { // If selecting a point
+                var dx, dy;
+
+                // Check all of the curve's points
+                for (var i=0; i<points.length;i++) {
+                    dx = points[i].x - e.x;
+                    dy = points[i].y - e.y;
+
+                    // If a collision found
+                    if ((dx * dx) + (dy * dy) < style.point.radius * style.point.radius) {
+                        // If deleting the point
+                        if (event.shiftKey) {
+                            // If it is in the extreme
+                            if (i == 0) {
+                                if (points.length > 1)
+                                    points.splice(0, 3);
+                                else points.shift();
+                            }
+                            else if (i == points.length - 1) {
+                                points.splice(points.length - 3, 3);
+                            }
+                            else if (i % 3 == 0) {
+                                points.splice(i - 1, 3);
+                            }
+                        }
+                        // If moving the point
+                        else {
+
+                        }
+                        drag = i;
+                        draggedPoint = e;
+                        canvas1.style.cursor = "move";
+                    }
+                }
+            }
+            curves[selected_curve].points = points;
+        }
+    }
+
+    // dragging
+    function dragging(e) {
+        if (drag!=null) {
+            //Get event position
+            e = mousePos(e);
+            var points = curves[selected_curve].points;
+
+            //Define translation difference
+            var x_diff = e.x - draggedPoint.x;
+            var y_diff = e.y - draggedPoint.y;
+            var diff_point = {x: x_diff, y: y_diff};
+
+            //Translate the point by such difference
+            points[drag] = pointSum(points[drag], diff_point);
+
+            //New reference position
+            draggedPoint = e;
+
+            //Ensure continuity
+            if (drag % 3 == 1 && drag > 1) {
+                points[drag - 2] = calculateContinuity(points[drag - 1], points[drag], 3, 3);
+            }
+            else if (drag % 3 == 2 && drag < points.length - 2) {
+                points[drag + 2] = calculateContinuity(points[drag + 1], points[drag], 3, 3);
+            }
+            else if (drag % 3 == 0 && drag != 0 && drag != points.length - 1) {
+                points[drag - 1] = pointSum(points[drag - 1], diff_point);
+                points[drag + 1] = pointSum(points[drag + 1], diff_point);
+            }
+
+            curves[selected_curve].points;
+
+            drawCanvas();
+        }
+    }
+
+    // end dragging
+    function dragEnd(e) {
+        drag = null;
+        canvas1.style.cursor = "default";
+        drawCanvas();
+    }
+
+    // event parser
+    function mousePos(event) {
+        event = (event ? event : window.event);
+        return {
+            x: event.pageX - canvas1.offsetLeft,
+            y: event.pageY - canvas1.offsetTop
+        }
+    }
+
+    /**
+     * Start ("main method")
+     */
+
+    // Assign canvas and context variables
+    canvas1 = document.getElementById("canvas1");
+    context1 = canvas1.getContext("2d");
+
+    init();
+
+    /**
+     * Auxiliary functions
+     */
+
+    /*
+    Factorial
+    */
+    function factorial(x) {
+        if (x < 0)                                  //In case it is less than 0  _-ERROR-_
+            return -1;
+        else if (mem_fact.length <= x)              //If it is not in the array, calculate it and all it's previous numbers
+            mem_fact.push(factorial(x-1) * x);
+        return mem_fact[x];
+    }
+
+    /*
+    Binomial Coefficient
+    */
+    function binomialCoefficient(n, k) {
+        if ((k < 0) || (n < 0) || (n < k))                                            //Wrong input _-ERROR-_
+            return -1;
+        if (! (n in mem_bin_coef))                                                    //If n doesn't exisit in memoization object, add it
+            mem_bin_coef[n] = {};
+        if (! (k in mem_bin_coef[n]))                                                 //If n over k doesn't exist in memoization object, add it
+            mem_bin_coef[n][k] = factorial(n) / (factorial(k) * factorial(n - k));
+        return mem_bin_coef[n][k];
+    }
+
+    /*
+    Retrieve Bézier Basis Function Guided By N & i
+    */
+    function getBasisFunctionNI(n, i) {
+        return function (t) {
+            var binomial = binomialCoefficient(n, i);
+            var t_pow_i = Math.pow(t, i);
+            var mirror_t_pow_i = Math.pow(1 - t, n - i);
+            return binomial * t_pow_i * mirror_t_pow_i;
+        };
+    }
+
+    /*
+    Bezier formula
+    */
+    function getBezierFormula(points) {
+        return function(t) {
+            var point = {x: 0, y:0};
+            var n = points.length - 1;
+
+            for (var i = 0; i <= n; i++) {
+                var basis = getBasisFunctionNI(n, i)(t);
+                var inner_sum = pointScalar(points[i], basis);
+                point = pointSum(point, inner_sum);
+            }
+
+            return point;
+        };
+    }
+
+    /*
+    Sum Two Points
+    */
+    function pointSum(point_a, point_b) {
+        return {x: point_a.x + point_b.x, y: point_a.y + point_b.y};
+    }
+
+    /*
+    Substract Two Points
+    */
+    function pointSubstract(point_a, point_b) {
+        return {x: point_a.x - point_b.x, y: point_a.y - point_b.y};
+    }
+
+    /*
+    Multiply Point By Scalar
+    */
+    function pointScalar(point, scalar) {
+        return {x: point.x * scalar, y: point.y * scalar};
+    }
+
+    /*
+    Draw Bézier Curve
+    */
+    function drawBezierCurve(context, style, points, step) {
+        //Curve Style
+        context.lineWidth = style.width;
+        context.strokeStyle = style.color;
+        context.beginPath();
+
+        //Draw Curve
+        var formula = getBezierFormula(points);
+        var point = formula(0);
+        context.moveTo(point.x, point.y);
+
+        for (t = 0 + step; t <= 1; t+=step) {
+            point = formula(t);
+            context.lineTo(point.x, point.y);
+            context.moveTo(point.x, point.y);
+        }
+
+        context.stroke();
+    }
+
+    /*
+    Draw Point
+    */
+    function drawPoint(context, style, point) {
+        //Point Style
+        context.lineWidth = style.width;
+        context.strokeStyle = style.color;
+        context.beginPath();
+
+        //Draw Curve
+        context.moveTo(point.x, point.y);
+        context.lineTo(point.x, point.y);
+        context.stroke();
+    }
+
+    /*
+    Draw Cubic Bezier Curve
+    */
+    function drawCubicBezierCurve(context, style, points, step) {
+        if (points.length % 3 != 1) drawBezierCurve(context, style, points, step);
+        else {
+            if (points.length == 0) return;                                                 //If there are no points, draw nothing
+            if (points.length == 1) return drawPoint(context, style, points[0]);  //If there is just one point, draw that point
+            for (var i = 0; i < points.length - 1; i += 3) {
+                var subpoints = [points[i], points[i+1], points[i+2], points[i+3]];
+                drawBezierCurve(context, style, subpoints, step);
+            }
+        }
+    }
+
+    /*
+    Calculate Continuity
+    */
+    function calculateContinuity(point, prev_guide, n, m) { // n = nº points prev curve // m = nº points next curve
+        var prev_calc = pointScalar(prev_guide, n / (n+m));
+        var difference = pointSubstract(point, prev_calc);
+        var result = pointScalar(difference, (m+n)/m);
+        return result;
+    }
+
+    /*
+    Draw Bézier Guides
+    */
+    function drawCubicBezierGuides(context, style, points) {
+        if (points.length >= 4) {
+            //Line Style
+            context.lineWidth = style.width;
+            context.strokeStyle = style.color;
+            context.beginPath();
+
+            //Draw Curve
+            context.moveTo(points[0].x, points[0].y);
+            for (var i = 0; i < points.length; i++) {
+                if (i % 3 != 2)
+                    context.lineTo(points[i].x, points[i].y);
+                context.moveTo(points[i].x, points[i].y);
+            }
+            context.stroke();
+        }
+    }
+
+    /*
+    Draw Bézier Points
+    */
+    function drawCubicBezierPoints(context, style, points) {
+        //Point Style
+        context.lineWidth = style.width;
+        context.strokeStyle = style.color;
+        context.fillStyle = style.fill;
+
+        var arc1 = 0;
+        var arc2 = 2 * Math.PI;
+        var radius = 5;
+        for (var i = 0; i < points.length; i++) {
+            if (i % 3 == 0) radius = style.bigRadius;
+            else radius = style.smallRadius;
+
+            context.beginPath();
+            context.arc(points[i].x, points[i].y, radius, arc1, arc2, true);
+            context.fill();
+            context.stroke();
+        }
+    }
+
+    /*
+    *************************************** HTML INTERFACE *********************************************
+    */
+
+    /*
+    Select a curve
+    */
+    function selectCurve(i) {
+        if (i == selected_curve) return;
+        for (let id in curves) {
+            if (id != i) {
+                //Unmark as selected
+                document.getElementById("curve"+id).style.backgroundColor = "";
+            }
+            else {
+                //Mark current curve as selected
+                document.getElementById("curve"+id).style.backgroundColor = "rgba(235,235,235,1)"
+                selected_curve = i;
+
+                //Get the curve's color and change DOM accordingly
+                document.getElementById("color_display").style.backgroundColor = curves[id].color;
+                var color_array = rgba2colorArray(curves[id].color);
+                document.getElementById("red_input").value = color_array[0];
+                document.getElementById("green_input").value = color_array[1];
+                document.getElementById("blue_input").value = color_array[2];
+
+                //Get the curve's width and change DOM accordingly
+                document.getElementById("width_input").value = curves[id].width;
+            }
+        }
+        drawCanvas();
+    }
+
+    /*
+    Delete a curve
+    */
+    function removeCurve(i) {
+        if (curves.hasOwnProperty(i)) {
+            if (selected_curve == i) selected_curve = -1;
+            document.getElementById("curve_selector").removeChild(document.getElementById("curve"+i));
+            delete curves[i];
+        }
+    }
+
+    /*
+    Add a created curve
+    */
+    function addCurveHTML(curve_id, curve_name) {
+        //Create DOM element to be added
+        var curve = document.createElement("div");
+        curve.id = "curve"+curve_id;
+        curve.className = "curve_element";
+        curve.onclick = function () { selectCurve(curve_id); };
+
+        //Create the text input field
+        var text_input = document.createElement("input");
+        text_input.type = "text";
+        text_input.id = "name"+curve_id;
+        text_input.value = curve_name;
+        text_input.onchange = function () { changeName(curve_id); };
+        curve.appendChild(text_input);
+
+        //Create the button
+        var button_input = document.createElement("button");
+        button_input.onclick = function () { removeCurve(curve_id); };
+        button_input.innerHTML = "Remove";
+        curve.appendChild(button_input);
+
+        //Add curve to the list
+        document.getElementById("curve_selector").appendChild(curve);
+    }
+
+    /*
+    Add a curve
+    */
+    function addCurve() {
+        //Increase the curve counter
+        n_curves++;
+        var curve_id = n_curves;
+
+        //Create a new curve
+        curves[curve_id] = {
+            id: curve_id,
+            curve_name: "Curve "+curve_id,
+            points: [],
+            width: 2,
+            color: "rgba(32, 174, 205, 1)"
+        }
+
+        //Add Curve to list
+        addCurveHTML(curve_id, curves[curve_id].curve_name);
+
+        //Select created list
+        selectCurve(curve_id);
+    }
+
+    /*
+    Change the selected curve's color
+    */
+    function changeColor() {
+        //Get color
+        var red = document.getElementById("red_input").value;
+        var green = document.getElementById("green_input").value;
+        var blue = document.getElementById("blue_input").value;
+        var color = "rgba("+red+", "+green+", "+blue+", 1)";
+
+        //Display in the box
+        document.getElementById("color_display").style.backgroundColor = color;
+
+        //Change the curve's color
+        if (curves.hasOwnProperty(selected_curve)) {
+            curves[selected_curve].color = color;
+        }
+
+        //Redraw canvas
+        drawCanvas();
+    }
+
+    /*
+    Change the selected curve's name
+    */
+    function changeName(id) {
+        if (curves.hasOwnProperty(id)) {
+            var curve_name = document.getElementById("name"+id).value;
+            curves[id].curve_name = curve_name;
+        }
+    }
+
+    /*
+    Change the selected curve's width
+    */
+    function changeWidth() {
+        //Get width
+        var width = document.getElementById("width_input").value;
+
+        //If possible, hange curve's width
+        var floatRegExp = RegExp('^[+-]?([0-9]*\.[0-9]+|[0-9]+)$');
+        if (curves.hasOwnProperty(selected_curve) && floatRegExp.test(width)) {
+            curves[selected_curve].width = width;
+        }
+
+        //Redraw canvas
+        drawCanvas();
+    }
+
+    /*
+    RGBA to Color Array
+    */
+    function rgba2colorArray(color_rgba) {
+        var color_array = color_rgba.split(',');
+        for (var i = 0; i < color_array.length; i++) {
+            color_array[i] = color_array[i].replace( /^\D+/g, '');
+        }
+        return color_array.slice(0,3);
+    }
+
+    /**
+     * Auxiliary functions for file handling
+     */
+	function saveToFile(text, name, type) {
+			var a = document.createElement("a");
+			var file = new Blob([text], {type: type});
+			a.href = URL.createObjectURL(file);
+			a.download = name;
+			a.click();
+		}
+
+
+	function saveCurve() {
+		//Save control points as JSON string to a file
+		saveToFile(JSON.stringify(curves), 'control_points.txt', 'text/plain');
+    }
+
+    function downloadImage() {
+        drawImage();
+
+        var a = document.createElement("a");
+        a.download = 'bezierDrawing.png';
+        a.href = document.getElementById('canvas1').toDataURL();
+        a.click();
+
+        drawCanvas();
+    }
+
+	function readSingleFile(e) {
+        var file = e.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var contents = e.target.result;
+            updateContents(contents);
+        };
+        reader.readAsText(file);
+	}
+
+	function updateContents(contents) {
+        // Delete all curves from list
+        for (let id in curves) {
+            removeCurve(id);
+        }
+
+        // Replace control points by object read from file
+        curves = JSON.parse(contents);
+
+        // Add curves to list
+        for (let id in curves) {
+            if (id > n_curves) n_curves = id;
+            addCurveHTML(id, curves[id].curve_name);
+        }
+
+        selectCurve(n_curves);
+
+        // Redraw
+        drawCanvas();
+	}
+
+	document.getElementById('load')
+	  .addEventListener('change', readSingleFile, false);
+
+</script>
+</body>
+</html>

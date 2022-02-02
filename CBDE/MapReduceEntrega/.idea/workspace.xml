@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ba1323a8-6de7-446c-95fd-0930a922b554" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ProjectId" id="1kmBJdJpHlhNcz3Kqczx7Yd7Id7" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../HBaseEntrega" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.0" />
+  </component>
+  <component name="RunManager">
+    <configuration name="Sheila's" type="Application" factoryName="Application">
+      <envs>
+        <env name="Path" value="C:\Users\agome\OneDrive\Documentos\UNI\CBDE\MapReduceEntrega\resources\winutils\bin" />
+      </envs>
+      <option name="MAIN_CLASS_NAME" value="cbde.labs.hbase_mapreduce.MainLocal" />
+      <module name="mapreduce1" />
+      <option name="PROGRAM_PARAMETERS" value="-selection input/wines.1000.sf input/selection.out " />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ba1323a8-6de7-446c-95fd-0930a922b554" name="Default Changelist" comment="" />
+      <created>1606295815601</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1606295815601</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="82" y="0" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606381965714">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="82" y="0" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1280.680@0.0.1280.680" timestamp="1606381965714" />
+    <state x="393" y="151" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1606318533749">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="393" y="151" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1280.680@0.0.1280.680" timestamp="1606318533749" />
+    <state x="371" y="130" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1606297274264">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="371" y="130" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1280.680@0.0.1280.680" timestamp="1606297274264" />
+    <state x="376" y="105" key="EnvironmentVariablesDialog" timestamp="1606297296538">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="376" y="105" key="EnvironmentVariablesDialog/0.0.1280.680@0.0.1280.680" timestamp="1606297296538" />
+    <state x="421" y="98" key="FileChooserDialogImpl" timestamp="1606383122775">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="421" y="98" key="FileChooserDialogImpl/0.0.1280.680@0.0.1280.680" timestamp="1606383122775" />
+    <state width="1237" height="2" key="GridCell.Tab.0.bottom" timestamp="1606397930170">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="2" key="GridCell.Tab.0.bottom/0.0.1280.680@0.0.1280.680" timestamp="1606397930170" />
+    <state width="1237" height="2" key="GridCell.Tab.0.center" timestamp="1606397930170">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="2" key="GridCell.Tab.0.center/0.0.1280.680@0.0.1280.680" timestamp="1606397930170" />
+    <state width="1237" height="2" key="GridCell.Tab.0.left" timestamp="1606397930170">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="2" key="GridCell.Tab.0.left/0.0.1280.680@0.0.1280.680" timestamp="1606397930170" />
+    <state width="1237" height="2" key="GridCell.Tab.0.right" timestamp="1606397930170">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state width="1237" height="2" key="GridCell.Tab.0.right/0.0.1280.680@0.0.1280.680" timestamp="1606397930170" />
+    <state x="121" y="0" key="SettingsEditor" timestamp="1606297243448">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="121" y="0" key="SettingsEditor/0.0.1280.680@0.0.1280.680" timestamp="1606297243448" />
+    <state x="91" y="0" key="new project wizard" timestamp="1606297468283">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="91" y="0" key="new project wizard/0.0.1280.680@0.0.1280.680" timestamp="1606297468283" />
+    <state x="350" y="0" key="refactoring.ChangeSignatureDialog" timestamp="1606326982498">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="350" y="0" key="refactoring.ChangeSignatureDialog/0.0.1280.680@0.0.1280.680" timestamp="1606326982498" />
+    <state x="297" y="-6" width="670" height="676" key="search.everywhere.popup" timestamp="1606298342038">
+      <screen x="0" y="0" width="1280" height="680" />
+    </state>
+    <state x="297" y="-6" width="670" height="676" key="search.everywhere.popup/0.0.1280.680@0.0.1280.680" timestamp="1606298342038" />
+  </component>
+</project>
